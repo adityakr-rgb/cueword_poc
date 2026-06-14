@@ -1,0 +1,9 @@
+.next/
+node_modules/
+public/
+# Keep the ported prototype CSS byte-for-byte verbatim.
+styles/prototype-base.css
+styles/prototype-class.css
+# SQL has no Prettier parser.
+supabase/
+package-lock.json
