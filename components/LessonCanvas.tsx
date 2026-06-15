@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import StageCard from "./StageCard";
 import VocabPopup from "./VocabPopup";
 import { BAND, buildSteps, EX_PHASES, PHASE_TIME, stepPhase } from "@/lib/lesson";
-import type { AnswerPayload, Phase, Question, Story, StoryKey } from "@/lib/types";
+import type { AnswerPayload, Driver, Phase, Question, Story, StoryKey } from "@/lib/types";
 
 const PHASE_ICON: Record<Phase, string> = {
   Listen: "🎧",
@@ -20,6 +20,7 @@ export default function LessonCanvas({
   storyKey,
   stepIndex,
   isDriver,
+  driver,
   onNext,
   onPrev,
   onAnswer,
@@ -31,6 +32,7 @@ export default function LessonCanvas({
   storyKey: StoryKey;
   stepIndex: number;
   isDriver: boolean;
+  driver: Driver;
   onNext: () => void;
   onPrev: () => void;
   onAnswer?: (e: Emit) => void;
@@ -50,7 +52,7 @@ export default function LessonCanvas({
 
   const band = BAND[storyKey];
   const canvasLabel =
-    band.sharer === "coach"
+    driver === "coach"
       ? `Shared screen — ${coachName} is sharing & marking · ${band.band}`
       : `Shared screen — ${kidName} is sharing & answering · ${band.band}`;
 

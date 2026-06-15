@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { answerText, BAND, nudgesFor, outcomeFor, QTYPE_LABEL, teachFor } from "@/lib/lesson";
-import type { Step, Story, StoryKey } from "@/lib/types";
+import type { Driver, Step, Story, StoryKey } from "@/lib/types";
 
 function RubricCard({ title, rows }: { title: string; rows: [string, number][] }) {
   return (
@@ -89,14 +89,16 @@ export default function CoachPlaybook({
   storyKey,
   step,
   kidName,
+  driver,
 }: {
   story: Story;
   storyKey: StoryKey;
   step: Step;
   kidName: string;
+  driver: Driver;
 }) {
   const band = BAND[storyKey];
-  const who = <WhoCard band={band.band} driver={band.driver} kidName={kidName} />;
+  const who = <WhoCard band={band.band} driver={driver} kidName={kidName} />;
 
   let content: React.ReactNode = null;
 
@@ -224,7 +226,7 @@ export default function CoachPlaybook({
         />
         <div className="pb-card">
           <div className="pb-card-h">
-            {band.driver === "coach" ? "You scribe — offer" : "Offer a sentence starter"}
+            {driver === "coach" ? "You scribe — offer" : "Offer a sentence starter"}
           </div>
           <p>&quot;{starter}…&quot;</p>
         </div>

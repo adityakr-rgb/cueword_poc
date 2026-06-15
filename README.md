@@ -9,14 +9,33 @@ Built on the production-intended stack: **Next.js (App Router, React, TS) + Supa
 Realtime)**, deployable to **Vercel**. The lesson UI is ported verbatim from the Cueword Story
 Prototype.
 
+## Logins (POC auth)
+
+Open `/login` and sign in. The **admin generates IDs + passwords** for coaches & students from the
+console. Seeded demo accounts:
+
+| Role    | Username | Password   |
+| ------- | -------- | ---------- |
+| Admin   | `admin`  | `admin123` |
+| Coach   | `maya`   | `maya123`  |
+| Student | `aanya`  | `aanya123` |
+
+Credentials are verified server-side (`/api/login`, scrypt hashes) and the identity is stored
+client-side. Data access is still anon (permissive RLS) — this gates **identity/UX, not data
+security**. Production → Supabase Auth.
+
 ## The demo flow
 
-1. **Admin** (`/admin`) — schedule a class (date/time, **Zoom link**, assign a story). A seeded
-   class already exists, so you can also skip straight to step 2.
-2. **Coach** (`/coach`) — see today's session, **Start class**.
-3. **Child** (`/student`) — tap a story on the slate. ✨ **It opens live on the coach's screen.**
-4. Step **Listen → Read → Speak → Write** together — every Next/Back syncs; the child's answers
-   reflect on the coach screen; the coach-only playbook shows nudges, the answer, and a live rubric.
+Open each role in its own window (the landing page links to `/login`).
+
+1. **Coach** (log in as `maya`) — **Start class**.
+2. **Student** (log in as `aanya`) — tap a story on the slate. ✨ **It opens live on the coach's
+   screen, and the student drives** (ticks answers, navigates).
+3. Step **Listen → Read → Speak → Write** — every Next/Back syncs; the student's answers reflect on
+   the coach screen; the coach-only playbook shows nudges/answer/rubric. The coach can **Take over**
+   if needed.
+4. **Admin** (log in as `admin`) — generate more logins, link student↔coach, schedule classes with a
+   Zoom link & story.
 
 ## Quick start
 
@@ -51,7 +70,7 @@ e2e/            magic-moment.spec.ts (Playwright, 3 contexts, gated)
 **Design principles**
 
 - **Sync the pointer, not the content.** Realtime only carries `{ story_key, current_step, phase,
-  driver, status }` on the `class_sessions` row; the heavy lesson content is rendered client-side
+driver, status }` on the `class_sessions` row; the heavy lesson content is rendered client-side
   from `lib/stories.ts`. Tiny payloads, instant re-render.
 - **One job per file.** All DB reads/writes/subscriptions live in `lib/session.ts` — no component
   talks to Supabase directly. Pure lesson logic is in `lib/lesson.ts` (fully unit-tested).

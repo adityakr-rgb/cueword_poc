@@ -5,10 +5,12 @@
 -- dashboards have something to show; the admin can also create more.
 -- ============================================================================
 
-insert into public.profiles (id, role, full_name, avatar_emoji, grade, timezone) values
-  ('11111111-1111-1111-1111-111111111111', 'admin',   'Ops Admin',   '🛠️', null, 'Asia/Kolkata'),
-  ('22222222-2222-2222-2222-222222222222', 'coach',   'Coach Maya',  '🧑‍🏫', null, 'Asia/Manila'),
-  ('33333333-3333-3333-3333-333333333333', 'student', 'Aanya',       '🦊', '3',  'America/Los_Angeles')
+-- Demo logins (passwords: admin123 / maya123 / aanya123). Hashes are scrypt
+-- "salt:hash" from lib/password.ts. Admin can generate more from the console.
+insert into public.profiles (id, role, full_name, avatar_emoji, grade, timezone, username, password_hash) values
+  ('11111111-1111-1111-1111-111111111111', 'admin',   'Ops Admin',   '🛠️', null, 'Asia/Kolkata',        'admin', '5ad450e9411230ccb0ec5b5bf1ca88bd:750808cb5167981c96c1b13534ba01c427472700453f4dda3090258fd17ab7e5cc2dbff8dbb0b3d57b611c7e568f57925e833f30ea8e2f808dc1f61cfa91356b'),
+  ('22222222-2222-2222-2222-222222222222', 'coach',   'Coach Maya',  '🧑‍🏫', null, 'Asia/Manila',         'maya',  '9930ec7ae90596d814a7e366abfbb085:4741193bf9464dc06f6c7d9c7f564c30bcd90289076ca61f76b0e777ee320aa26df8d430a59de0fe528d852f958da8391b67e6bb70377461d41575aae26fcc93'),
+  ('33333333-3333-3333-3333-333333333333', 'student', 'Aanya',       '🦊', '3',  'America/Los_Angeles', 'aanya', '684d08a3a031f48d468690a433eba43b:1e3f722f6e6a7bb8350986f29c30b77225123c5aa5aff8777c2a001259068bb874b80009113b2f80bee3ffbce71504666f787f025a76281402f5ef32418bb04a')
 on conflict (id) do nothing;
 
 insert into public.stories (id, key, grade, title, theme, theme_color, cover_emoji, scene_image_url) values

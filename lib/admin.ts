@@ -9,7 +9,11 @@ import type { Enrollment, Profile, Role, StoryRow } from "./types";
 
 export async function listProfiles(role?: Role): Promise<Profile[]> {
   const sb = getSupabaseBrowser();
-  let q = sb.from("profiles").select("*").order("created_at", { ascending: true });
+  // Never select password_hash to the browser.
+  let q = sb
+    .from("profiles")
+    .select("id, role, full_name, avatar_emoji, grade, timezone, username, created_at")
+    .order("created_at", { ascending: true });
   if (role) q = q.eq("role", role);
   const { data, error } = await q;
   if (error) throw error;
@@ -55,6 +59,8 @@ export type AdminAction =
       avatar_emoji?: string;
       grade?: string | null;
       timezone?: string | null;
+      username?: string; // optional — server generates if omitted
+      password?: string; // optional — server generates if omitted
     }
   | { action: "createEnrollment"; student_id: string; coach_id: string; plan?: string }
   | {
@@ -84,7 +90,10 @@ async function postAdmin<T>(body: AdminAction): Promise<T> {
 export function createProfile(
   p: Omit<Extract<AdminAction, { action: "createProfile" }>, "action">,
 ) {
-  return postAdmin<{ profile: Profile }>({ action: "createProfile", ...p });
+  return postAdmin<{ profile: Profile; username: string; password: string }>({
+    action: "createProfile",
+    ...p,
+  });
 }
 export function createEnrollment(
   p: Omit<Extract<AdminAction, { action: "createEnrollment" }>, "action">,

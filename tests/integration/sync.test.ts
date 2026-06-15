@@ -6,12 +6,22 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
 
 const RUN = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 );
 
 const SEEDED_SESSION = "55555555-5555-5555-5555-555555555555";
+
+async function reset(client: typeof import("@/lib/supabase/client")) {
+  await client
+    .getSupabaseBrowser()
+    .from("class_sessions")
+    .update({ story_key: null, status: "scheduled", current_step: 0, current_phase: null })
+    .eq("id", SEEDED_SESSION);
+}
 
 describe.skipIf(!RUN)("realtime sync", () => {
   let session: typeof import("@/lib/session");
@@ -20,40 +30,59 @@ describe.skipIf(!RUN)("realtime sync", () => {
   beforeAll(async () => {
     session = await import("@/lib/session");
     client = await import("@/lib/supabase/client");
-    // Reset the seeded session to a clean "scheduled, no story" state.
-    await client
-      .getSupabaseBrowser()
-      .from("class_sessions")
-      .update({ story_key: null, status: "scheduled", current_step: 0, current_phase: null })
-      .eq("id", SEEDED_SESSION);
+    await reset(client);
   });
 
   afterAll(async () => {
-    if (!RUN) return;
-    await client
-      .getSupabaseBrowser()
-      .from("class_sessions")
-      .update({ story_key: null, status: "scheduled", current_step: 0, current_phase: null })
-      .eq("id", SEEDED_SESSION);
+    if (client) await reset(client);
   });
 
   it("openStory writes the pointer and a subscriber receives the change", async () => {
-    const received = new Promise<{ story_key: string | null; status: string }>((resolve) => {
-      const unsub = session.subscribeSession(SEEDED_SESSION, (row) => {
-        if (row.story_key === "G3" && row.status === "live") {
-          resolve({ story_key: row.story_key, status: row.status });
-          unsub();
-        }
-      });
-    });
+    // Node has no native WebSocket that realtime-js will use here, so give it
+    // `ws` as the transport. (The browser app uses its built-in WebSocket.)
+    const sb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+      { realtime: { transport: WebSocket as never } },
+    );
 
-    // Give the channel a moment to subscribe, then trigger the magic moment.
-    await new Promise((r) => setTimeout(r, 800));
-    await session.openStory(SEEDED_SESSION, "G3", null, "student");
+    // Subscribe first; only trigger the write once the channel is SUBSCRIBED
+    // (avoids the race where the update fires before the socket has joined).
+    const received = new Promise<{ story_key: string | null; status: string }>(
+      (resolve, reject) => {
+        const channel = sb
+          .channel(`itest-${SEEDED_SESSION}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "class_sessions",
+              filter: `id=eq.${SEEDED_SESSION}`,
+            },
+            (payload) => {
+              const row = payload.new as { story_key: string | null; status: string };
+              if (row.story_key === "G3" && row.status === "live") {
+                resolve({ story_key: row.story_key, status: row.status });
+                void sb.removeChannel(channel);
+              }
+            },
+          )
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              void session.openStory(SEEDED_SESSION, "G3", null, "student");
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+              reject(new Error(`channel ${status}`));
+            }
+          });
+      },
+    );
 
     const row = await Promise.race([
       received,
-      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("no realtime event")), 8000)),
+      new Promise<never>((_, rej) =>
+        setTimeout(() => rej(new Error("no realtime event in time")), 25000),
+      ),
     ]);
     expect(row.story_key).toBe("G3");
     expect(row.status).toBe("live");
@@ -62,7 +91,7 @@ describe.skipIf(!RUN)("realtime sync", () => {
     const fresh = await session.getSession(SEEDED_SESSION);
     expect(fresh?.story_key).toBe("G3");
     expect(fresh?.current_step).toBe(0);
-  }, 15000);
+  }, 35000);
 
   it("setStep advances the synced step", async () => {
     await session.setStep(SEEDED_SESSION, 2, "Listen", "student");

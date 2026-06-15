@@ -12,14 +12,18 @@
 -- ---- Tables ---------------------------------------------------------------
 
 create table if not exists public.profiles (
-  id           uuid primary key default gen_random_uuid(),
-  role         text not null check (role in ('admin','student','coach')),
-  full_name    text not null,
-  avatar_emoji text,
-  grade        text,
-  timezone     text,
-  created_at   timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  role          text not null check (role in ('admin','student','coach')),
+  full_name     text not null,
+  avatar_emoji  text,
+  grade         text,
+  timezone      text,
+  username      text,          -- login id (admin-generated)
+  password_hash text,          -- scrypt: "salt:hash" (POC auth; see lib/password.ts)
+  created_at    timestamptz not null default now()
 );
+create unique index if not exists idx_profiles_username
+  on public.profiles (lower(username)) where username is not null;
 
 create table if not exists public.enrollments (
   id         uuid primary key default gen_random_uuid(),

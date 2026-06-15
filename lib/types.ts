@@ -152,7 +152,16 @@ export interface Profile {
   avatar_emoji: string | null;
   grade: string | null;
   timezone: string | null;
+  username: string | null;
   created_at: string;
+}
+
+/** The logged-in identity stored client-side (never includes the password hash). */
+export interface AuthUser {
+  id: string;
+  role: Role;
+  full_name: string;
+  avatar_emoji: string | null;
 }
 export interface Enrollment {
   id: string;

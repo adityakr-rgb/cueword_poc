@@ -4,6 +4,7 @@
 // ============================================================================
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin, isAdminConfigured } from "@/lib/supabase/server";
+import { generatePassword, generateUsername, hashPassword } from "@/lib/password";
 import type { AdminAction } from "@/lib/admin";
 
 export async function POST(req: Request) {
@@ -26,10 +27,13 @@ export async function POST(req: Request) {
   try {
     switch (body.action) {
       case "createProfile": {
-        const { role, full_name, avatar_emoji, grade, timezone } = body;
+        const { role, full_name, avatar_emoji, grade, timezone, username, password } = body;
         if (!role || !full_name) {
           return NextResponse.json({ error: "role and full_name are required." }, { status: 400 });
         }
+        // Admin-generated login: use provided creds or generate them.
+        const finalUsername = (username || "").trim() || generateUsername(full_name);
+        const finalPassword = (password || "").trim() || generatePassword();
         const { data, error } = await sb
           .from("profiles")
           .insert({
@@ -38,11 +42,18 @@ export async function POST(req: Request) {
             avatar_emoji: avatar_emoji ?? null,
             grade: grade ?? null,
             timezone: timezone ?? null,
+            username: finalUsername,
+            password_hash: hashPassword(finalPassword),
           })
-          .select()
+          .select("id, role, full_name, avatar_emoji, grade, timezone, username, created_at")
           .single();
         if (error) throw error;
-        return NextResponse.json({ profile: data });
+        // Return the plaintext password once so the admin can share it.
+        return NextResponse.json({
+          profile: data,
+          username: finalUsername,
+          password: finalPassword,
+        });
       }
 
       case "createEnrollment": {

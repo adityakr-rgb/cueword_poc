@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run tests/unit",
+    "test:watch": "vitest tests/unit",
+    "test:int": "vitest run tests/integration",
     "test:e2e": "playwright test",
-    "test:all": "vitest run && playwright test",
+    "test:all": "vitest run tests/unit && vitest run tests/integration && playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -25,11 +26,13 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "prettier": "^3.8.4",
     "typescript": "^5",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "ws": "^8.21.0"
   }
 }

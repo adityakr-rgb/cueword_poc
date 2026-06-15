@@ -4,7 +4,6 @@
 // (Admin provisioning writes go through /api/admin with the service role.)
 // ============================================================================
 import { getSupabaseBrowser } from "./supabase/client";
-import { BAND } from "./lesson";
 import type {
   AnswerPayload,
   ClassSession,
@@ -169,7 +168,7 @@ export async function openStory(
       current_step: 0,
       current_phase: "Listen",
       status: "live",
-      driver: BAND[storyKey].driver,
+      driver: "student", // the student always drives the lesson (ticks answers, navigates)
     })
     .eq("id", sessionId);
   if (error) throw error;

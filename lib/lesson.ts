@@ -3,7 +3,7 @@
 // No DOM, no React, no network → fully unit-testable. Components render JSX
 // from these structures; the coach playbook reads the text helpers here.
 // ============================================================================
-import type { Driver, Phase, Question, Step, Story, StoryKey } from "./types";
+import type { AnswerPayload, Driver, Phase, Question, Step, Story, StoryKey } from "./types";
 
 // Build the ordered step list for a story (cover → listen → Qs → read → Qs →
 // game → speak → write → ending → complete). Mirrors buildSteps() exactly.
@@ -95,6 +95,24 @@ export function answerText(q: Question): string {
       return q.target;
     case "short":
       return q.sample;
+  }
+}
+
+// The option the student actually ticked — shown to the coach in the answer note.
+export function pickedAnswerLabel(q: Question, choice: AnswerPayload["choice"]): string {
+  switch (q.type) {
+    case "mcq":
+    case "cloze":
+      return typeof choice === "number" ? q.opts[choice] : String(choice);
+    case "truefalse":
+      if (typeof choice === "boolean") return choice ? "True" : "False";
+      return choice === 0 ? "True" : "False";
+    case "multi":
+      return Array.isArray(choice) ? choice.map((i) => q.opts[i]).join(", ") : String(choice);
+    case "match":
+      return String(choice);
+    default:
+      return String(choice);
   }
 }
 

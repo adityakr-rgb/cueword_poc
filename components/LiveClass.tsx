@@ -5,8 +5,8 @@ import TopBar from "./TopBar";
 import ClassPeople from "./ClassPeople";
 import LessonCanvas from "./LessonCanvas";
 import CoachPlaybook from "./CoachPlaybook";
-import { BAND, buildSteps, stepPhase } from "@/lib/lesson";
-import type { AnswerPayload, Question, Step, Story, StoryKey } from "@/lib/types";
+import { buildSteps, stepPhase } from "@/lib/lesson";
+import type { AnswerPayload, Driver, Question, Step, Story, StoryKey } from "@/lib/types";
 
 type Emit = { questionType: Question["type"]; choice: AnswerPayload["choice"]; correct: boolean };
 
@@ -22,6 +22,7 @@ export default function LiveClass({
   storyKey,
   stepIndex,
   isDriver,
+  driver,
   coachName,
   kidName,
   kidInitial,
@@ -38,6 +39,7 @@ export default function LiveClass({
   storyKey: StoryKey;
   stepIndex: number;
   isDriver: boolean;
+  driver: Driver;
   coachName: string;
   kidName: string;
   kidInitial: string;
@@ -53,7 +55,6 @@ export default function LiveClass({
   const steps = buildSteps(story);
   const idx = Math.min(Math.max(stepIndex, 0), steps.length - 1);
   const step = steps[idx];
-  const band = BAND[storyKey];
 
   return (
     <>
@@ -72,7 +73,7 @@ export default function LiveClass({
             coachInitial={coachName.charAt(0) || "C"}
             kidName={kidName}
             kidInitial={kidInitial}
-            sharer={band.sharer}
+            sharer={driver}
             activePlanKey={planKeyFor(step)}
           />
           <LessonCanvas
@@ -80,6 +81,7 @@ export default function LiveClass({
             storyKey={storyKey}
             stepIndex={idx}
             isDriver={isDriver}
+            driver={driver}
             onNext={onNext}
             onPrev={onPrev}
             onAnswer={onAnswer}
@@ -99,6 +101,7 @@ export default function LiveClass({
                 storyKey={storyKey}
                 step={step}
                 kidName={kidName}
+                driver={driver}
               />
             </aside>
           )}

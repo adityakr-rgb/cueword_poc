@@ -6,6 +6,7 @@ import {
   buildSteps,
   nudgesFor,
   outcomeFor,
+  pickedAnswerLabel,
   stepPhase,
   teachFor,
 } from "@/lib/lesson";
@@ -93,5 +94,22 @@ describe("BAND (who drives)", () => {
     expect(BAND.K.driver).toBe("coach");
     expect(BAND.G3.driver).toBe("student");
     expect(BAND.G6.driver).toBe("student");
+  });
+});
+
+describe("pickedAnswerLabel (what the student ticked, shown to the coach)", () => {
+  it("resolves the ticked option text for each question type", () => {
+    const mcq = GRADE_STORIES.G3.listen.questions[0]; // mcq
+    expect(pickedAnswerLabel(mcq, 0)).toBe(mcq.opts[0]);
+    expect(pickedAnswerLabel(mcq, 1)).toBe(mcq.opts[1]);
+
+    const tf = GRADE_STORIES.G6.read.questions.find((q) => q.type === "truefalse")!;
+    expect(pickedAnswerLabel(tf, 0)).toBe("True");
+    expect(pickedAnswerLabel(tf, 1)).toBe("False");
+
+    const multi = GRADE_STORIES.G3.listen.questions[1]; // multi
+    if (multi.type === "multi") {
+      expect(pickedAnswerLabel(multi, [0, 1])).toContain(multi.opts[0]);
+    }
   });
 });

@@ -1,21 +1,19 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
-import { listProfiles } from "@/lib/admin";
 import {
   getActiveSessionForCoach,
   getActiveSessionForStudent,
   subscribeAllSessions,
   subscribeSession,
 } from "@/lib/session";
-import type { ClassSession, Profile } from "@/lib/types";
+import type { AuthUser, ClassSession } from "@/lib/types";
 
 /**
- * Resolves the seeded identity for a role, loads its active/today session, and
- * keeps it live via Realtime. The single hook both /student and /coach use.
+ * Loads the active/today session for the logged-in student or coach and keeps
+ * it live via Realtime. The single hook both /student and /coach use.
  */
-export function useActiveSession(role: "student" | "coach") {
-  const [profile, setProfile] = useState<Profile | null>(null);
+export function useActiveSession(user: AuthUser | null) {
   const [session, setSession] = useState<ClassSession | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
@@ -25,26 +23,23 @@ export function useActiveSession(role: "student" | "coach") {
     sessionRef.current = session;
   }, [session]);
 
+  const userId = user?.id ?? null;
+  const role = user?.role ?? null;
+
   const fetchActive = useCallback(
-    async (id: string) =>
-      role === "student" ? getActiveSessionForStudent(id) : getActiveSessionForCoach(id),
+    (id: string) =>
+      role === "coach" ? getActiveSessionForCoach(id) : getActiveSessionForStudent(id),
     [role],
   );
 
-  // Initial load: identity + active session.
+  // Initial load for the logged-in user.
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || !userId || (role !== "student" && role !== "coach")) return;
     let cancelled = false;
     (async () => {
       try {
-        const profs = await listProfiles(role);
-        const prof = profs[0] ?? null;
-        if (cancelled) return;
-        setProfile(prof);
-        if (prof) {
-          const s = await fetchActive(prof.id);
-          if (!cancelled) setSession(s);
-        }
+        const s = await fetchActive(userId);
+        if (!cancelled) setSession(s);
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
       } finally {
@@ -54,7 +49,7 @@ export function useActiveSession(role: "student" | "coach") {
     return () => {
       cancelled = true;
     };
-  }, [role, fetchActive]);
+  }, [userId, role, fetchActive]);
 
   // Fast path: live updates for the active session row.
   useEffect(() => {
@@ -62,20 +57,13 @@ export function useActiveSession(role: "student" | "coach") {
     return subscribeSession(session.id, (row) => setSession(row));
   }, [session?.id]);
 
-  // Pick up a newly-created session if we currently have none (admin scheduling live).
+  // Pick up a newly-created session if we currently have none.
   useEffect(() => {
-    if (!isSupabaseConfigured || !profile) return;
+    if (!isSupabaseConfigured || !userId || (role !== "student" && role !== "coach")) return;
     return subscribeAllSessions(() => {
-      if (!sessionRef.current) void fetchActive(profile.id).then((s) => s && setSession(s));
+      if (!sessionRef.current) void fetchActive(userId).then((s) => s && setSession(s));
     });
-  }, [profile, fetchActive]);
+  }, [userId, role, fetchActive]);
 
-  return {
-    profile,
-    session,
-    setSession,
-    loading,
-    error,
-    configured: isSupabaseConfigured,
-  };
+  return { session, setSession, loading, error };
 }

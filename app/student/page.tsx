@@ -5,28 +5,46 @@ import SetupNotice from "@/components/SetupNotice";
 import StorySlate from "@/components/StorySlate";
 import LiveClass from "@/components/LiveClass";
 import { useActiveSession } from "@/components/useActiveSession";
-import { getAssignedStories, listProfiles } from "@/lib/admin";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { logout, useCurrentUser } from "@/lib/auth";
+import { getAssignedStories, listProfiles, listStories } from "@/lib/admin";
 import { logAnswer, openStory, setStep, toRenderState } from "@/lib/session";
 import { getStory } from "@/lib/stories";
-import { BAND, buildSteps, stepPhase } from "@/lib/lesson";
-import type { AnswerPayload, Question, StoryKey, StoryRow } from "@/lib/types";
+import { buildSteps, stepPhase } from "@/lib/lesson";
+import type { AnswerPayload, Profile, Question, StoryKey, StoryRow } from "@/lib/types";
 
 type Emit = { questionType: Question["type"]; choice: AnswerPayload["choice"]; correct: boolean };
 
 export default function StudentPage() {
   const router = useRouter();
-  const { profile, session, setSession, loading, configured } = useActiveSession("student");
+  const { user, ready } = useCurrentUser();
+  const { session, setSession, loading } = useActiveSession(user);
   const [assigned, setAssigned] = useState<StoryRow[]>([]);
-  const [coachName, setCoachName] = useState("Coach Maya");
+  const [allStories, setAllStories] = useState<StoryRow[]>([]);
+  const [coaches, setCoaches] = useState<Profile[]>([]);
 
   useEffect(() => {
-    if (!configured || !profile) return;
-    void getAssignedStories(profile.id).then(setAssigned);
-    void listProfiles("coach").then((c) => c[0] && setCoachName(c[0].full_name));
-  }, [configured, profile]);
+    if (ready && (!user || user.role !== "student")) router.replace("/login");
+  }, [ready, user, router]);
 
-  if (!configured) return <SetupNotice />;
-  if (loading) return <div className="cw-today">Loading…</div>;
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user || user.role !== "student") return;
+    void getAssignedStories(user.id).then(setAssigned);
+    void listStories().then(setAllStories);
+    void listProfiles("coach").then(setCoaches);
+  }, [user]);
+
+  if (!isSupabaseConfigured) return <SetupNotice />;
+  if (!ready || loading) return <div className="cw-today">Loading…</div>;
+  if (!user || user.role !== "student") return null; // redirecting to /login
+
+  // Slate = the student's assigned stories, or all stories as a fallback so a
+  // freshly-created student can always open something.
+  const slate = assigned.length ? assigned : allStories;
+  const coachName =
+    coaches.find((c) => c.id === session?.coach_id)?.full_name ??
+    coaches[0]?.full_name ??
+    "your coach";
 
   const render = session ? toRenderState(session) : null;
   const storyKey = render?.storyKey ?? null;
@@ -38,7 +56,7 @@ export default function StudentPage() {
     if (story) {
       const steps = buildSteps(story);
       const idx = render!.stepIndex;
-      const isDriver = BAND[storyKey].driver === "student";
+      const isDriver = session.driver === "student";
 
       const go = (ni: number) => {
         const clamped = Math.min(Math.max(ni, 0), steps.length - 1);
@@ -60,9 +78,10 @@ export default function StudentPage() {
           storyKey={storyKey}
           stepIndex={idx}
           isDriver={isDriver}
+          driver={session.driver}
           coachName={coachName}
-          kidName={profile?.full_name ?? "Student"}
-          kidInitial={(profile?.full_name ?? "S").charAt(0)}
+          kidName={user.full_name}
+          kidInitial={user.full_name.charAt(0)}
           zoomLink={session.zoom_link}
           onNext={() => go(idx + 1)}
           onPrev={() => go(idx - 1)}
@@ -76,7 +95,7 @@ export default function StudentPage() {
   // ---- Today view ---------------------------------------------------------
   const pickStory = (key: StoryKey) => {
     if (!session) return;
-    const row = assigned.find((s) => s.key === key);
+    const row = slate.find((s) => s.key === key);
     setSession({
       ...session,
       story_key: key,
@@ -84,7 +103,7 @@ export default function StudentPage() {
       status: "live",
       current_step: 0,
       current_phase: "Listen",
-      driver: BAND[key].driver,
+      driver: "student",
     });
     void openStory(session.id, key, row?.id ?? null, "student");
   };
@@ -93,9 +112,18 @@ export default function StudentPage() {
     <div className="cw-today">
       <div className="cw-today-head">
         <div>
-          <div className="cw-today-hi">Hi {profile?.full_name ?? "there"} 👋</div>
+          <div className="cw-today-hi">Hi {user.full_name} 👋</div>
           <div className="cw-today-sub">Your class-side learning space</div>
         </div>
+        <button
+          className="cw-logout"
+          onClick={() => {
+            logout();
+            router.replace("/login");
+          }}
+        >
+          Log out
+        </button>
       </div>
 
       {session ? (
@@ -130,7 +158,7 @@ export default function StudentPage() {
       )}
 
       <div className="cw-section-label">📚 Your stories — tap one to open it in class</div>
-      <StorySlate stories={assigned} onPick={pickStory} disabled={!session} />
+      <StorySlate stories={slate} onPick={pickStory} disabled={!session} />
     </div>
   );
 }

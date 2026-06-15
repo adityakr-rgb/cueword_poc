@@ -1,7 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import SetupNotice from "@/components/SetupNotice";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { logout, useCurrentUser } from "@/lib/auth";
 import {
   createEnrollment,
   createProfile,
@@ -21,11 +23,16 @@ function toLocalInput(d: Date): string {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
+  const { user, ready } = useCurrentUser();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [stories, setStories] = useState<StoryRow[]>([]);
   const [sessions, setSessions] = useState<ClassSession[]>([]);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [creds, setCreds] = useState<{ name: string; username: string; password: string } | null>(
+    null,
+  );
 
   // Form state
   const [pForm, setPForm] = useState({
@@ -59,6 +66,10 @@ export default function AdminPage() {
     return subscribeAllSessions(() => void reloadSessions());
   }, [reloadProfiles, reloadEnrollments, reloadSessions]);
 
+  useEffect(() => {
+    if (ready && (!user || user.role !== "admin")) router.replace("/login");
+  }, [ready, user, router]);
+
   const nameById = useMemo(() => {
     const m = new Map<string, Profile>();
     profiles.forEach((p) => m.set(p.id, p));
@@ -74,19 +85,22 @@ export default function AdminPage() {
   const coaches = profiles.filter((p) => p.role === "coach");
 
   if (!isSupabaseConfigured) return <SetupNotice />;
+  if (!ready) return <div className="cw-admin">Loading…</div>;
+  if (!user || user.role !== "admin") return null; // redirecting to /login
 
   async function onCreateProfile(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await createProfile({
+      const res = await createProfile({
         role: pForm.role,
         full_name: pForm.full_name,
         avatar_emoji: pForm.avatar_emoji || undefined,
         grade: pForm.grade || null,
       });
+      setCreds({ name: res.profile.full_name, username: res.username, password: res.password });
       setPForm({ ...pForm, full_name: "", grade: "" });
       await reloadProfiles();
-      setMsg({ kind: "ok", text: "Profile created." });
+      setMsg({ kind: "ok", text: `Created ${res.profile.full_name} — share the login below.` });
     } catch (err) {
       setMsg({ kind: "err", text: (err as Error).message });
     }
@@ -131,6 +145,16 @@ export default function AdminPage() {
     <div className="cw-admin">
       <div className="cw-admin-head">
         <h1>🛠️ Admin console</h1>
+        <button
+          className="cw-logout"
+          style={{ marginLeft: "auto" }}
+          onClick={() => {
+            logout();
+            router.replace("/login");
+          }}
+        >
+          Log out
+        </button>
       </div>
       <div className="cw-admin-sub">
         Provision people, link a student to a coach, and schedule a class with a Zoom link + a
@@ -146,6 +170,7 @@ export default function AdminPage() {
           {profiles.map((p) => (
             <span key={p.id} className="cw-chip">
               {p.avatar_emoji} {p.full_name} · {p.role}
+              {p.username ? ` · @${p.username}` : ""}
               {p.grade ? ` · G${p.grade}` : ""}
             </span>
           ))}
@@ -191,9 +216,18 @@ export default function AdminPage() {
             />
           </div>
           <button className="cw-btn" type="submit">
-            Add person
+            Generate login →
           </button>
         </form>
+        {creds && (
+          <div className="cw-creds">
+            🔑 Login for <b>{creds.name}</b> — username <code>{creds.username}</code> · password{" "}
+            <code>{creds.password}</code>
+            <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 6 }}>
+              Share these with the user. The password won&apos;t be shown again.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Enrollments */}

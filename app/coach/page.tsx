@@ -7,6 +7,8 @@ import BodyClass from "@/components/BodyClass";
 import TopBar from "@/components/TopBar";
 import ClassPeople from "@/components/ClassPeople";
 import { useActiveSession } from "@/components/useActiveSession";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { logout, useCurrentUser } from "@/lib/auth";
 import { listProfiles } from "@/lib/admin";
 import {
   endClass,
@@ -17,40 +19,76 @@ import {
   toRenderState,
 } from "@/lib/session";
 import { getStory } from "@/lib/stories";
-import { buildSteps, stepPhase } from "@/lib/lesson";
+import { buildSteps, pickedAnswerLabel, stepPhase } from "@/lib/lesson";
+import type { AnswerPayload, Profile } from "@/lib/types";
 
 export default function CoachPage() {
   const router = useRouter();
-  const { profile, session, setSession, loading, configured } = useActiveSession("coach");
-  const [studentName, setStudentName] = useState("Aanya");
-  const [lastAnswer, setLastAnswer] = useState<{ stepIndex: number; correct: boolean } | null>(
-    null,
-  );
+  const { user, ready } = useCurrentUser();
+  const { session, setSession, loading } = useActiveSession(user);
+  const [students, setStudents] = useState<Profile[]>([]);
+  const [lastAnswer, setLastAnswer] = useState<{
+    stepIndex: number;
+    correct: boolean;
+    choice: AnswerPayload["choice"];
+  } | null>(null);
 
   useEffect(() => {
-    if (!configured) return;
-    void listProfiles("student").then((s) => s[0] && setStudentName(s[0].full_name));
-  }, [configured]);
+    if (ready && (!user || user.role !== "coach")) router.replace("/login");
+  }, [ready, user, router]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user || user.role !== "coach") return;
+    void listProfiles("student").then(setStudents);
+  }, [user]);
 
   // Reflect the student's picks live on the coach screen.
   useEffect(() => {
-    if (!configured || !session?.id) return;
+    if (!isSupabaseConfigured || !session?.id) return;
     return subscribeSessionEvents(session.id, (evt) => {
       if (evt.type === "answer") {
-        const p = evt.payload as { stepIndex?: number; correct?: boolean };
-        setLastAnswer({ stepIndex: Number(p.stepIndex ?? -1), correct: Boolean(p.correct) });
+        const p = evt.payload as {
+          stepIndex?: number;
+          correct?: boolean;
+          choice?: AnswerPayload["choice"];
+        };
+        setLastAnswer({
+          stepIndex: Number(p.stepIndex ?? -1),
+          correct: Boolean(p.correct),
+          choice: p.choice as AnswerPayload["choice"],
+        });
       }
     });
-  }, [configured, session?.id]);
+  }, [session?.id]);
 
-  if (!configured) return <SetupNotice />;
-  if (loading) return <div className="cw-today">Loading…</div>;
+  const studentName =
+    (session?.student_id
+      ? students.find((p) => p.id === session.student_id)?.full_name
+      : undefined) ??
+    students[0]?.full_name ??
+    "the student";
 
-  const coachName = profile?.full_name ?? "Coach Maya";
+  if (!isSupabaseConfigured) return <SetupNotice />;
+  if (!ready || loading) return <div className="cw-today">Loading…</div>;
+  if (!user || user.role !== "coach") return null; // redirecting to /login
+
+  const coachName = user.full_name;
   const kidInitial = studentName.charAt(0);
   const render = session ? toRenderState(session) : null;
   const storyKey = render?.storyKey ?? null;
   const isLiveWithStory = session?.status === "live" && !!storyKey;
+
+  const logoutBtn = (
+    <button
+      className="cw-logout"
+      onClick={() => {
+        logout();
+        router.replace("/login");
+      }}
+    >
+      Log out
+    </button>
+  );
 
   // ---- Live console -------------------------------------------------------
   if (isLiveWithStory && session && storyKey) {
@@ -71,10 +109,12 @@ export default function CoachPage() {
         setSession({ ...session, driver: next });
         void setDriver(session.id, next);
       };
-
+      const curStep = steps[idx];
       const answerNote =
-        lastAnswer && lastAnswer.stepIndex === idx
-          ? `${studentName} answered ${lastAnswer.correct ? "correctly ✓" : "— offer a nudge"}`
+        lastAnswer && lastAnswer.stepIndex === idx && curStep.kind === "q"
+          ? `${studentName} ticked "${pickedAnswerLabel(curStep.q, lastAnswer.choice)}" ${
+              lastAnswer.correct ? "✓ correct" : "✗ wrong answer"
+            }`
           : null;
 
       return (
@@ -83,6 +123,7 @@ export default function CoachPage() {
           storyKey={storyKey}
           stepIndex={idx}
           isDriver={isDriver}
+          driver={session.driver}
           coachName={coachName}
           kidName={studentName}
           kidInitial={kidInitial}
@@ -96,9 +137,12 @@ export default function CoachPage() {
             router.push("/");
           }}
           headerActions={
-            <button className="cw-takeover" onClick={toggleDriver}>
-              {isDriver ? `Give control to ${studentName}` : "Take over"}
-            </button>
+            <>
+              <button className="cw-takeover" onClick={toggleDriver}>
+                {isDriver ? `Give control to ${studentName}` : "Take over"}
+              </button>
+              {logoutBtn}
+            </>
           }
         />
       );
@@ -119,6 +163,7 @@ export default function CoachPage() {
               void endClass(session.id);
               router.push("/");
             }}
+            actions={logoutBtn}
           />
           <div className="class-main">
             <ClassPeople
@@ -167,6 +212,7 @@ export default function CoachPage() {
           <div className="cw-today-hi">Good day, {coachName} 👋</div>
           <div className="cw-today-sub">Your teaching console</div>
         </div>
+        {logoutBtn}
       </div>
 
       {session ? (
@@ -177,7 +223,7 @@ export default function CoachPage() {
             <div className="cc-meta">
               {session.status === "completed"
                 ? "Class complete. Nice work."
-                : "Start the class, then guide " + studentName + " through the story."}
+                : `Start the class, then guide ${studentName} through the story.`}
             </div>
           </div>
           <div className="cw-class-actions">
@@ -215,9 +261,11 @@ export default function CoachPage() {
       <div className="cw-class-card">
         <div>
           <div className="cc-title" style={{ fontSize: 18 }}>
-            {studentName} · Grade 3
+            {studentName}
           </div>
-          <div className="cc-meta">Reading & Listening above grade · Speaking is the focus.</div>
+          <div className="cc-meta">
+            Reading &amp; Listening above grade · Speaking is the focus.
+          </div>
         </div>
       </div>
     </div>
