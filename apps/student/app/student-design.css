@@ -81,7 +81,7 @@
 }
 
 * { box-sizing: border-box; }
-html { zoom: 0.9; } /* bake in the 90% browser zoom that read best */
+html { zoom: 0.9; background: var(--paper); } /* bake in the 90% browser zoom that read best; bg matches body so the scroll canvas below the fold isn't prototype-base's cream */
 html, body { margin: 0; padding: 0; }
 body {
   font-family: var(--font-body);
@@ -135,6 +135,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: var(--r-md);
   color: var(--ink-2);
   font-weight: 600; font-size: 15.5px;
+  text-decoration: none;
   transition: background .15s, color .15s, transform .1s;
   text-align: left; width: 100%;
 }
@@ -1107,12 +1108,12 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
 .belt-knot { width: 40px; height: 40px; border-radius: var(--r-sm); margin-bottom: 7px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25), 0 4px 10px rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; }
 .belt-name { font-family: var(--font-head); font-weight: 800; font-size: 19px; line-height: 1; }
 .belt-tier { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; opacity: .7; margin-top: 3px; }
-.belt-info { position: relative; z-index: 1; min-width: 0; }
+.belt-detail { position: relative; z-index: 1; min-width: 0; }
 .belt-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
 .belt-h { font-family: var(--font-head); font-weight: 800; font-size: 25px; margin: 5px 0 6px; line-height: 1.1; }
 .belt-sub { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.82); max-width: 52ch; }
 .belt-sub b { color: var(--gold); }
-.belt-track { display: flex; gap: 5px; margin-top: 16px; }
+.belt-bar { display: flex; gap: 5px; margin-top: 16px; }
 .belt-pip { flex: 1; height: 8px; border-radius: var(--r-pill); background: rgba(255,255,255,.16); position: relative; }
 .belt-pip.done { background: var(--bp); }
 .belt-pip.now { background: var(--bp); box-shadow: 0 0 0 3px rgba(244,201,93,.3); }
@@ -1263,7 +1264,7 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
   .wo-grid { grid-template-columns: repeat(2, 1fr); }
   .story-grid { grid-template-columns: 1fr; }
   .belt-hero { grid-template-columns: 1fr; text-align: center; justify-items: center; }
-  .belt-info { text-align: center; }
+  .belt-detail { text-align: center; }
   .gate-grid, .lvl-row { grid-template-columns: 1fr; }
 }
 

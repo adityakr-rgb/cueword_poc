@@ -75,7 +75,7 @@ export default function Progress() {
             </span>
           </div>
         </div>
-        <div className="belt-info">
+        <div className="belt-detail">
           <div className="belt-eyebrow">Working toward {nextBelt.name} belt</div>
           <div className="belt-h">
             {beltPct}% of the way to {nextBelt.name}
@@ -84,7 +84,7 @@ export default function Progress() {
             A belt is earned across <b>all four skills</b> — not one. {s.first} is strong in Reading, but <b>{blocker.name}</b> needs{" "}
             {G.gateTarget - blocker.pts} more points before the {nextBelt.name} belt unlocks.
           </div>
-          <div className="belt-track">
+          <div className="belt-bar">
             {G.belts.map((b, i) => (
               <span
                 key={b.name}
