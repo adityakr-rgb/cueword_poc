@@ -208,7 +208,7 @@ export default function CoachLivePage() {
             <div className="cc-title">1:1 with {studentName}</div>
             <div className="cc-meta">
               {session.status === "completed"
-                ? "Class complete. Nice work."
+                ? `Last class wrapped — start a new one with ${studentName} whenever you're ready.`
                 : `Start the class, then guide ${studentName} through the story.`}
             </div>
           </div>
@@ -217,17 +217,21 @@ export default function CoachLivePage() {
             <a className="btn-secondary btn-small" href={zoomLink} target="_blank" rel="noreferrer">
               Join Zoom
             </a>
-            {session.status === "scheduled" && (
-              <button
-                className="btn-primary btn-small"
-                onClick={() => {
-                  setSession({ ...session, status: "live" });
-                  void startClass(session.id);
-                }}
-              >
-                Start class →
-              </button>
-            )}
+            <button
+              className="btn-primary btn-small"
+              onClick={() => {
+                setSession({
+                  ...session,
+                  status: "live",
+                  story_key: null,
+                  current_step: 0,
+                  current_phase: null,
+                });
+                void startClass(session.id);
+              }}
+            >
+              {session.status === "completed" ? "Restart class →" : "Start class →"}
+            </button>
           </div>
         </div>
       ) : (

@@ -144,9 +144,22 @@ export async function logAnswer(
 
 export async function startClass(sessionId: string): Promise<void> {
   const sb = getSupabaseBrowser();
+  // Start (or restart) the class in a clean live state — clears any prior story
+  // so the magic moment can be (re)demoed. Safe for the normal scheduled→live
+  // path too (a scheduled session has no story yet). This is what lets a coach
+  // restart a "completed" class instead of being stuck.
   const { error } = await sb
     .from("class_sessions")
-    .update({ status: "live", started_at: new Date().toISOString() })
+    .update({
+      status: "live",
+      story_key: null,
+      story_id: null,
+      current_step: 0,
+      current_phase: null,
+      driver: "student",
+      started_at: new Date().toISOString(),
+      ended_at: null,
+    })
     .eq("id", sessionId);
   if (error) throw error;
 }
