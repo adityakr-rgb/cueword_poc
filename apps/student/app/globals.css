@@ -1,0 +1,583 @@
+/* ============================================================================
+   POC-only chrome. The real design system + tokens come verbatim from
+   styles/prototype-base.css and styles/prototype-class.css (imported in layout).
+   Everything here reuses those tokens (var(--ink), var(--gold), …).
+   ============================================================================ */
+
+.cw-page-pad {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+}
+
+/* ---- Setup / config notice ------------------------------------------------ */
+.cw-setup {
+  max-width: 680px;
+  margin: 48px auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--gold-deep);
+  border-radius: var(--r-lg);
+  padding: 22px 26px;
+  box-shadow: var(--sh-sm);
+}
+.cw-setup h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+.cw-setup p,
+.cw-setup li {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.cw-setup code {
+  background: var(--cream-2);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 12.5px;
+}
+.cw-setup ol {
+  margin: 10px 0 0 18px;
+}
+
+/* ---- Launcher (/) --------------------------------------------------------- */
+.cw-launch {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 64px 28px 80px;
+}
+.cw-launch-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 26px;
+}
+.cw-launch-logo .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+.cw-launch-logo b {
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+.cw-launch-logo span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--cream);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.cw-launch h1 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.cw-launch .lede {
+  font-size: 17px;
+  color: var(--ink-3);
+  max-width: 640px;
+  margin-bottom: 36px;
+  line-height: 1.55;
+}
+.cw-launch-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+@media (max-width: 760px) {
+  .cw-launch-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.cw-launch-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 24px;
+  box-shadow: var(--sh-sm);
+  transition:
+    transform 160ms,
+    box-shadow 160ms;
+}
+.cw-launch-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sh-lg);
+}
+.cw-launch-emoji {
+  font-size: 34px;
+}
+.cw-launch-card h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 12px 0 6px;
+}
+.cw-launch-card p {
+  font-size: 13.5px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+.cw-launch-card .go {
+  display: inline-block;
+  margin-top: 14px;
+  font-weight: 700;
+  font-size: 14px;
+}
+.cw-demo-script {
+  margin-top: 34px;
+  font-size: 13px;
+  color: var(--ink-2);
+  background: var(--cream-2);
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  line-height: 1.6;
+}
+
+/* ---- "Today" cards (student + coach) -------------------------------------- */
+.cw-today {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 36px 28px 80px;
+}
+.cw-today-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.cw-today-hi {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+.cw-today-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.cw-class-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 22px 24px;
+  box-shadow: var(--sh-md);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.cw-class-card .cc-when {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--coral-deep);
+  font-weight: 700;
+}
+.cw-class-card .cc-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 4px 0;
+}
+.cw-class-card .cc-meta {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.cw-class-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.cw-status {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 11px;
+  border-radius: 999px;
+}
+.cw-status-scheduled {
+  background: var(--cream-3);
+  color: var(--ink-2);
+}
+.cw-status-live {
+  background: #e5484d;
+  color: #fff;
+}
+.cw-status-completed {
+  background: var(--moss);
+  color: #fff;
+}
+.cw-status-cancelled {
+  background: var(--line-2);
+  color: var(--ink-3);
+}
+.cw-section-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 8px 0 14px;
+}
+
+/* ---- Story slate ---------------------------------------------------------- */
+.cw-slate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 860px) {
+  .cw-slate-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.cw-slate-card {
+  text-align: left;
+  width: 100%;
+  padding: 0;
+}
+.cw-slate-card:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.cw-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+.cw-cover-emoji {
+  font-size: 64px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+}
+.cw-slate-empty {
+  color: var(--ink-3);
+  font-size: 14px;
+  background: var(--cream-2);
+  border-radius: var(--r-md);
+  padding: 18px;
+}
+
+/* ---- Live shell tweaks ---------------------------------------------------- */
+.class-main.cw-2col {
+  grid-template-columns: 230px 1fr;
+}
+.ws-answer-note {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--cream-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+}
+.cw-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 60px 30px;
+  color: var(--ink-2);
+}
+.cw-waiting .cw-waiting-emoji {
+  font-size: 46px;
+}
+.cw-waiting h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+.cw-waiting p {
+  font-size: 14px;
+  color: var(--ink-3);
+  max-width: 360px;
+  line-height: 1.6;
+}
+.cw-takeover {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e8edf6;
+}
+.cw-takeover:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ---- Login-as picker ------------------------------------------------------ */
+.cw-loginas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.cw-loginas select {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* ---- Admin console -------------------------------------------------------- */
+.cw-admin {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+}
+.cw-admin-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.cw-admin-head h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+}
+.cw-admin-sub {
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-bottom: 26px;
+}
+.cw-panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px 22px;
+  box-shadow: var(--sh-sm);
+  margin-bottom: 20px;
+}
+.cw-panel h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+.cw-panel .cw-panel-sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.cw-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.cw-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.cw-field label {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.cw-input,
+.cw-select {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  color: var(--ink);
+  width: 100%;
+}
+.cw-btn {
+  background: var(--ink);
+  color: var(--cream);
+  padding: 10px 18px;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.cw-btn:hover {
+  background: var(--ink-2);
+}
+.cw-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cw-btn-gold {
+  background: var(--gold-deep);
+  color: var(--ink);
+}
+.cw-btn-gold:hover {
+  background: var(--gold);
+}
+.cw-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.cw-chip {
+  font-size: 13px;
+  background: var(--cream-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.cw-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.cw-table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.cw-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--cream-2);
+  color: var(--ink-2);
+}
+.cw-table a {
+  color: var(--sky);
+  text-decoration: underline;
+}
+.cw-error {
+  color: var(--coral-deep);
+  font-size: 13px;
+  margin-top: 10px;
+}
+.cw-ok {
+  color: var(--moss);
+  font-size: 13px;
+  margin-top: 10px;
+}
+.cw-creds {
+  margin-top: 12px;
+  background: var(--gold-tint);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  font-size: 14px;
+}
+.cw-creds code {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-weight: 700;
+}
+
+/* ---- Login ---------------------------------------------------------------- */
+.cw-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.cw-login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-lg);
+  padding: 28px 26px;
+}
+.cw-login-card h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  margin: 14px 0 4px;
+}
+.cw-login-sub {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-bottom: 18px;
+}
+.cw-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cw-login-form .cw-btn {
+  margin-top: 4px;
+  width: 100%;
+  text-align: center;
+}
+.cw-demo-accounts {
+  margin-top: 20px;
+  border-top: 1px solid var(--cream-2);
+  padding-top: 14px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.cw-demo-title {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.cw-demo-accounts ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cw-demo-accounts b {
+  color: var(--ink);
+}
+
+/* ---- Logout button (in dashboard headers) -------------------------------- */
+.cw-logout {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.cw-logout:hover {
+  background: var(--cream-2);
+  color: var(--ink);
+}
+.cw-topright {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* Logout styled for the dark live top bar */
+.ct-right .cw-logout {
+  color: #e8edf6;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.ct-right .cw-logout:hover {
+  background: rgba(255, 255, 255, 0.16);
+}

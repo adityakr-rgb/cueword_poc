@@ -8,12 +8,11 @@ config({ path: ".env.local" });
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import { SESSION_ID as SEEDED_SESSION } from "@/lib/config";
 
 const RUN = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 );
-
-const SEEDED_SESSION = "55555555-5555-5555-5555-555555555555";
 
 async function reset(client: typeof import("@/lib/supabase/client")) {
   await client

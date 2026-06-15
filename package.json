@@ -1,25 +1,25 @@
 {
-  "name": "cueword-poc",
+  "name": "cueword-monorepo",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev:student": "npm run dev --workspace=@cueword/student",
+    "dev:coach": "npm run dev --workspace=@cueword/coach",
+    "build": "npm run build --workspaces --if-present",
+    "build:student": "npm run build --workspace=@cueword/student",
+    "build:coach": "npm run build --workspace=@cueword/coach",
     "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run tests/unit",
     "test:watch": "vitest tests/unit",
     "test:int": "vitest run tests/integration",
     "test:e2e": "playwright test",
-    "test:all": "vitest run tests/unit && vitest run tests/integration && playwright test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.108.1",
-    "next": "16.2.9",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "test:all": "vitest run tests/unit && vitest run tests/integration && playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -34,5 +34,8 @@
     "typescript": "^5",
     "vitest": "^4.1.8",
     "ws": "^8.21.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   }
 }

@@ -1,12 +1,13 @@
 -- ============================================================================
 -- Cueword Live-Class POC — seed data (idempotent; safe to re-run)
--- Personas: Ops Admin, Coach Maya, Aanya (Grade 3). Stories K/G3/G6 (metadata
--- only — content lives in lib/stories.ts). One scheduled class so all three
--- dashboards have something to show; the admin can also create more.
+-- The two-app POC authenticates against packages/core/src/config/poc.config.json
+-- (no DB-backed login). This seed only needs the ONE class_sessions row whose id
+-- equals config.SESSION_ID ('55555555-…'); both apps subscribe to it for the
+-- magic-moment sync. The profiles/enrollments below are legacy FK targets kept
+-- so the session row's foreign keys resolve — they are not read by the apps.
 -- ============================================================================
 
--- Demo logins (passwords: admin123 / maya123 / aanya123). Hashes are scrypt
--- "salt:hash" from lib/password.ts. Admin can generate more from the console.
+-- Legacy profiles (password_hash unused now — auth lives in poc.config.json).
 insert into public.profiles (id, role, full_name, avatar_emoji, grade, timezone, username, password_hash) values
   ('11111111-1111-1111-1111-111111111111', 'admin',   'Ops Admin',   '🛠️', null, 'Asia/Kolkata',        'admin', '5ad450e9411230ccb0ec5b5bf1ca88bd:750808cb5167981c96c1b13534ba01c427472700453f4dda3090258fd17ab7e5cc2dbff8dbb0b3d57b611c7e568f57925e833f30ea8e2f808dc1f61cfa91356b'),
   ('22222222-2222-2222-2222-222222222222', 'coach',   'Coach Maya',  '🧑‍🏫', null, 'Asia/Manila',         'maya',  '9930ec7ae90596d814a7e366abfbb085:4741193bf9464dc06f6c7d9c7f564c30bcd90289076ca61f76b0e777ee320aa26df8d430a59de0fe528d852f958da8391b67e6bb70377461d41575aae26fcc93'),
@@ -36,7 +37,9 @@ insert into public.assignments (student_id, story_id, assigned_by) values
   ('33333333-3333-3333-3333-333333333333', 'c0000000-0000-0000-0000-0000000000c6', '11111111-1111-1111-1111-111111111111')
 on conflict (student_id, story_id) do nothing;
 
--- One scheduled class today (story chosen live via the magic moment → story_key stays null).
+-- THE one session both apps watch (id == config.SESSION_ID). story_key stays
+-- null so the student picks live (the magic moment). The Zoom link is read from
+-- poc.config.json at runtime, not from this row.
 insert into public.class_sessions
   (id, enrollment_id, student_id, coach_id, story_id, story_key,
    scheduled_at, duration_min, zoom_link, status, driver, current_step)
@@ -46,5 +49,5 @@ values
    '33333333-3333-3333-3333-333333333333',
    '22222222-2222-2222-2222-222222222222',
    null, null,
-   now(), 30, 'https://zoom.us/j/0000000000', 'scheduled', 'student', 0)
+   now(), 30, 'https://zoom.us/j/94945601041?pwd=kwiv9XebE7z06u0iVyaqbaKIpTMMq3.1', 'scheduled', 'student', 0)
 on conflict (id) do nothing;

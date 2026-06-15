@@ -1,27 +1,40 @@
-// E2E — the automated proof of the concept: a child logs in and opens a story,
-// and the SAME story appears live on the coach's screen; then they step the
-// lesson in sync and the student (not the coach) drives. Requires a running app
-// + Supabase (with seed). Gated on env. Run: npm run test:e2e
+// E2E — the automated proof of the concept, now ACROSS TWO ORIGINS:
+// the student app (:3100) and the coach app (:3200) talk to one Supabase, so a
+// story the student opens appears live on the coach's screen, they step in sync,
+// and the student (not the coach) drives. The two video tiles are gone — both
+// live views show the "Place your Zoom window here" placeholder.
+//
+// Requires both dev servers running (playwright.config starts them) + Supabase
+// seeded. Gated on the public Supabase env. Run: npm run test:e2e
+// (first time: npx playwright install chromium)
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const STUDENT_URL = process.env.STUDENT_URL || "http://localhost:3100";
+const COACH_URL = process.env.COACH_URL || "http://localhost:3200";
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SB_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Must equal config.SESSION_ID — guarded by tests/unit/config.test.ts.
 const SEEDED_SESSION = "55555555-5555-5555-5555-555555555555";
 
-test.skip(!URL || !SERVICE, "Supabase env not set (NEXT_PUBLIC_SUPABASE_URL + SERVICE_ROLE_KEY).");
+test.skip(!SB_URL || !SB_ANON, "Supabase env not set (NEXT_PUBLIC_SUPABASE_URL + ANON_KEY).");
 
-async function loginAs(page: Page, username: string, password: string, expectPath: RegExp) {
+// The live class is hidden below 940px by design, so run wide.
+const DESKTOP = { viewport: { width: 1280, height: 900 } };
+
+async function login(page: Page, username: string, password: string) {
   await page.goto("/login");
   await page.locator('input[autocomplete="username"]').fill(username);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: /Log in/i }).click();
-  await page.waitForURL(expectPath, { timeout: 10_000 });
+  // Each app is single-role and sends you home ("/") on success.
+  await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 10_000 });
 }
 
-// Reset the seeded session to a clean "scheduled, no story" state before each run.
+// Reset the shared session to a clean "scheduled, no story" state before each run.
+// Uses the anon key (permissive POC RLS) — no service-role key needed.
 test.beforeEach(async () => {
-  const sb = createClient(URL!, SERVICE!);
+  const sb = createClient(SB_URL!, SB_ANON!);
   await sb
     .from("class_sessions")
     .update({
@@ -34,27 +47,40 @@ test.beforeEach(async () => {
     .eq("id", SEEDED_SESSION);
 });
 
-test("child opens a story → coach sees it live → student drives in sync", async ({ browser }) => {
-  const coachCtx = await browser.newContext();
-  const studentCtx = await browser.newContext();
+test("student opens a story → coach sees it live across domains → student drives", async ({
+  browser,
+}) => {
+  const coachCtx = await browser.newContext({ ...DESKTOP, baseURL: COACH_URL });
+  const studentCtx = await browser.newContext({ ...DESKTOP, baseURL: STUDENT_URL });
   const coach = await coachCtx.newPage();
   const student = await studentCtx.newPage();
 
-  await loginAs(coach, "maya", "maya123", /\/coach/);
-  await loginAs(student, "aanya", "aanya123", /\/student/);
+  // Log in to each app (JSON-config auth, no server round-trip).
+  await login(coach, "liza", "liza123");
+  await login(student, "maya", "maya123");
 
-  // Coach starts the class.
+  // Coach enters the live console and starts the class.
+  await coach.goto("/live");
   await coach.getByRole("button", { name: /Start class/i }).click();
-  await expect(coach.getByText(/Waiting for .* to open a story/i)).toBeVisible({ timeout: 10_000 });
+  await expect(coach.getByText(/Waiting for .* to open a story/i)).toBeVisible({
+    timeout: 10_000,
+  });
+  // The Zoom placeholder replaced the two coach/student video tiles.
+  await expect(coach.locator(".cp-zoom-stage")).toBeVisible();
+  await expect(coach.locator(".cp-coach, .cp-student")).toHaveCount(0);
 
-  // THE MAGIC MOMENT — child taps a story on their slate.
+  // THE MAGIC MOMENT — student opens a story on the OTHER domain.
+  await student.goto("/live");
   await student.getByRole("button", { name: /The First Flight/i }).click();
 
-  // The same story now renders on the coach's screen, live.
-  await expect(coach.locator(".ct-story")).toContainText("The First Flight", { timeout: 10_000 });
-  await expect(student.locator(".ct-story")).toContainText("The First Flight", { timeout: 10_000 });
+  // The same story renders live on the coach's screen (cross-origin Realtime).
+  await expect(coach.locator(".ct-story")).toContainText("The First Flight", { timeout: 15_000 });
+  await expect(student.locator(".ct-story")).toContainText("The First Flight", {
+    timeout: 15_000,
+  });
+  await expect(student.locator(".cp-zoom-stage")).toBeVisible();
 
-  // The STUDENT drives: their Next button is enabled; the coach's is not.
+  // The STUDENT drives: their Next is enabled, the coach's is not.
   const studentNext = student.getByRole("button", { name: /^Next/i });
   const coachNext = coach.getByRole("button", { name: /^Next/i });
   await expect(studentNext).toBeEnabled();

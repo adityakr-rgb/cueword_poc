@@ -100,8 +100,8 @@ describe("BAND (who drives)", () => {
 describe("pickedAnswerLabel (what the student ticked, shown to the coach)", () => {
   it("resolves the ticked option text for each question type", () => {
     const mcq = GRADE_STORIES.G3.listen.questions[0]; // mcq
-    expect(pickedAnswerLabel(mcq, 0)).toBe(mcq.opts[0]);
-    expect(pickedAnswerLabel(mcq, 1)).toBe(mcq.opts[1]);
+    expect(pickedAnswerLabel(mcq, 0)).toBe("They fixed bicycles");
+    expect(pickedAnswerLabel(mcq, 1)).toBe("They were pilots");
 
     const tf = GRADE_STORIES.G6.read.questions.find((q) => q.type === "truefalse")!;
     expect(pickedAnswerLabel(tf, 0)).toBe("True");

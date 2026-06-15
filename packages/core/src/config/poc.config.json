@@ -1,0 +1,17 @@
+{
+  "coach": {
+    "username": "liza",
+    "password": "liza123",
+    "displayName": "Liza Reyes"
+  },
+  "student": {
+    "username": "maya",
+    "password": "maya123",
+    "displayName": "Maya"
+  },
+  "session": {
+    "id": "55555555-5555-5555-5555-555555555555",
+    "zoomLink": "https://zoom.us/j/94945601041?pwd=kwiv9XebE7z06u0iVyaqbaKIpTMMq3.1",
+    "storyKey": null
+  }
+}

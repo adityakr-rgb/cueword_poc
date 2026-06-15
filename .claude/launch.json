@@ -2,9 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "poc",
+      "name": "coach",
       "runtimeExecutable": "/bin/zsh",
-      "runtimeArgs": ["-ic", "npm run dev -- -p 3100"],
+      "runtimeArgs": ["-ic", "npm run dev:coach"],
+      "port": 3200
+    },
+    {
+      "name": "student",
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": ["-ic", "npm run dev:student"],
       "port": 3100
     }
   ]
