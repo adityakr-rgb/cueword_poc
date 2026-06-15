@@ -69,9 +69,9 @@ test("student opens a story → coach sees it live across domains → student dr
   await expect(coach.locator(".cp-zoom-stage")).toBeVisible();
   await expect(coach.locator(".cp-coach, .cp-student")).toHaveCount(0);
 
-  // THE MAGIC MOMENT — student opens a story on the OTHER domain.
+  // THE MAGIC MOMENT — the student joins the live class on the OTHER domain.
+  // The configured story (The First Flight) auto-opens — no picker.
   await student.goto("/live");
-  await student.getByRole("button", { name: /The First Flight/i }).click();
 
   // The same story renders live on the coach's screen (cross-origin Realtime).
   await expect(coach.locator(".ct-story")).toContainText("The First Flight", { timeout: 15_000 });

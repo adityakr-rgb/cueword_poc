@@ -1,54 +1,63 @@
 "use client";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SetupNotice from "@cueword/core/components/SetupNotice";
-import StorySlate from "@cueword/core/components/StorySlate";
 import LiveClass from "@cueword/core/components/LiveClass";
 import { useActiveSession } from "@cueword/core/components/useActiveSession";
 import { isSupabaseConfigured } from "@cueword/core/lib/supabase/client";
-import { logout, useCurrentUser } from "@cueword/core/lib/auth";
+import { useCurrentUser } from "@cueword/core/lib/auth";
 import { POC, getZoomLink } from "@cueword/core/lib/config";
 import { logAnswer, openStory, setStep, toRenderState } from "@cueword/core/lib/session";
-import { getStory, STORY_META } from "@cueword/core/lib/stories";
+import { getStory } from "@cueword/core/lib/stories";
 import { buildSteps, stepPhase } from "@cueword/core/lib/lesson";
-import type { AnswerPayload, Question, StoryKey, StoryRow } from "@cueword/core/lib/types";
+import type { AnswerPayload, Question, StoryKey } from "@cueword/core/lib/types";
 
 type Emit = { questionType: Question["type"]; choice: AnswerPayload["choice"]; correct: boolean };
 
-// The student's slate comes straight from the client-side story content.
-const SLATE: StoryRow[] = STORY_META.map((m) => ({
-  id: m.key,
-  key: m.key,
-  grade: m.grade,
-  title: m.title,
-  theme: m.theme,
-  theme_color: m.themeColor,
-  cover_emoji: m.cover,
-  scene_image_url: m.sceneImage,
-  created_at: "",
-}));
+// The class always runs ONE configured story — the student joins straight into
+// it (no story picker). Change it in poc.config.json → session.storyKey.
+const AUTO_STORY = (POC.session.storyKey ?? "G3") as StoryKey;
 
 export default function StudentLivePage() {
   const router = useRouter();
   const { user, ready } = useCurrentUser();
   const { session, setSession, loading } = useActiveSession();
+  const openedRef = useRef(false);
 
   useEffect(() => {
     if (ready && (!user || user.role !== "student")) router.replace("/login");
   }, [ready, user, router]);
 
-  const coachName = POC.coach.displayName;
   const render = useMemo(() => (session ? toRenderState(session) : null), [session]);
-
-  if (!isSupabaseConfigured) return <SetupNotice />;
-  if (!ready || loading) return <div className="cw-today">Loading…</div>;
-  if (!user || user.role !== "student") return null; // redirecting to /login
-
   const storyKey = render?.storyKey ?? null;
   const isLive = session?.status === "live" && !!storyKey;
-  const zoomLink = getZoomLink(); // JSON config is the single source of truth for the link
 
-  // ---- Live view ----------------------------------------------------------
+  // Auto-open the configured story the moment we arrive without one, so the
+  // student lands directly in the live lesson (Zoom already opened from the
+  // dashboard). This is the magic moment — it syncs to the coach instantly.
+  useEffect(() => {
+    if (!session || isLive || openedRef.current) return;
+    openedRef.current = true;
+    setSession({
+      ...session,
+      story_key: AUTO_STORY,
+      story_id: null,
+      status: "live",
+      current_step: 0,
+      current_phase: "Listen",
+      driver: "student",
+    });
+    void openStory(session.id, AUTO_STORY, null, "student");
+  }, [session, isLive, setSession]);
+
+  if (!isSupabaseConfigured) return <SetupNotice />;
+  if (!ready || (loading && !session)) return <div className="cw-today">Loading…</div>;
+  if (!user || user.role !== "student") return null; // redirecting to /login
+
+  const coachName = POC.coach.displayName;
+  const zoomLink = getZoomLink();
+
+  // ---- Live lesson (the only view — no picker) ----------------------------
   if (isLive && session && storyKey) {
     const story = getStory(storyKey);
     if (story) {
@@ -89,60 +98,15 @@ export default function StudentLivePage() {
     }
   }
 
-  // ---- Today / story-pick view (the magic moment) -------------------------
-  const pickStory = (key: StoryKey) => {
-    if (!session) return;
-    setSession({
-      ...session,
-      story_key: key,
-      story_id: null,
-      status: "live",
-      current_step: 0,
-      current_phase: "Listen",
-      driver: "student",
-    });
-    void openStory(session.id, key, null, "student");
-  };
-
+  // ---- Brief state while the story opens (or no seeded session row) -------
   return (
     <div className="cw-today">
-      <div className="cw-today-head">
-        <div>
-          <div className="cw-today-hi">Hi {user.full_name} 👋</div>
-          <div className="cw-today-sub">Your class-side learning space</div>
-        </div>
-        <div className="cw-today-actions">
-          <button className="cw-logout" onClick={() => router.push("/")}>
-            ← Dashboard
-          </button>
-          <button
-            className="cw-logout"
-            onClick={() => {
-              logout();
-              router.replace("/login");
-            }}
-          >
-            Log out
-          </button>
-        </div>
-      </div>
-
       {session ? (
         <div className="cw-class-card">
           <div>
-            <div className="cc-when">Today&apos;s class</div>
+            <div className="cc-when">Opening your class…</div>
             <div className="cc-title">1:1 with {coachName}</div>
-            <div className="cc-meta">
-              {session.status === "live"
-                ? "Your class is live — open a story below to begin together."
-                : "Your coach will start the class. Open a story when you're ready."}
-            </div>
-          </div>
-          <div className="cw-class-actions">
-            <span className={`cw-status cw-status-${session.status}`}>{session.status}</span>
-            <a className="btn-primary btn-small" href={zoomLink} target="_blank" rel="noreferrer">
-              Join Zoom
-            </a>
+            <div className="cc-meta">Taking you into today&apos;s story.</div>
           </div>
         </div>
       ) : (
@@ -150,9 +114,6 @@ export default function StudentLivePage() {
           No class session found — check that Supabase is seeded (config.SESSION_ID).
         </div>
       )}
-
-      <div className="cw-section-label">📚 Your stories — tap one to open it in class</div>
-      <StorySlate stories={SLATE} onPick={pickStory} disabled={!session} />
     </div>
   );
 }
