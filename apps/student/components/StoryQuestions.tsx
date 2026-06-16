@@ -1,8 +1,9 @@
 "use client";
-// Interactive comprehension questions for the Story experience — renders all 8
-// question types with answer-checking, correct/incorrect feedback, an
-// explanation, and a running score. Each card is self-contained; the parent
-// only tracks per-question results to show the summary. Scoped under .cw-story.
+// Interactive comprehension for the Story experience — ONE question at a time
+// (flip with Previous / Next + a progress rail, no long scroll). Single-answer
+// types auto-reveal on tap; multi-step types use a Check button. Calls
+// onComplete once every question has been answered, so the player can gate the
+// "continue" button. Scoped under .cw-story.
 import { useCallback, useMemo, useState } from "react";
 import type {
   StoryQuestion,
@@ -57,44 +58,32 @@ function sameSet(a: number[], b: number[]): boolean {
 function Verdict({ ok, explain }: { ok: boolean; explain?: string }) {
   return (
     <div className={"sq-verdict " + (ok ? "ok" : "no")}>
-      <span className="sq-verdict-tag">{ok ? "✓ Correct" : "✗ Not quite"}</span>
+      <span className="sq-verdict-tag">{ok ? "✓ Nice — that's right." : "✗ Not quite."}</span>
       {explain && <span className="sq-explain">{explain}</span>}
     </div>
   );
 }
-function CardActions({
-  checked,
-  canCheck,
-  onCheck,
-  onReset,
-}: {
-  checked: boolean;
-  canCheck: boolean;
-  onCheck: () => void;
-  onReset: () => void;
-}) {
+function CheckButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
   return (
     <div className="sq-actions">
-      {!checked ? (
-        <button className="sq-check" disabled={!canCheck} onClick={onCheck}>
-          Check answer
-        </button>
-      ) : (
-        <button className="sq-retry" onClick={onReset}>
-          ↺ Try again
-        </button>
-      )}
+      <button className="sq-check" disabled={disabled} onClick={onClick}>
+        Check answer
+      </button>
     </div>
   );
 }
 
 type CardProps<Q> = { q: Q; onResult: (ok: boolean) => void };
 
-/* ---------- MCQ ---------- */
+/* ---------- single-answer types: auto-reveal on tap ---------- */
 function McqCard({ q, onResult }: CardProps<McqQuestion>) {
   const [pick, setPick] = useState<number | null>(null);
-  const [checked, setChecked] = useState(false);
-  const ok = pick === q.correct;
+  const checked = pick !== null;
+  const choose = (i: number) => {
+    if (pick !== null) return;
+    setPick(i);
+    onResult(i === q.correct);
+  };
   return (
     <>
       <div className="sq-opts">
@@ -103,36 +92,27 @@ function McqCard({ q, onResult }: CardProps<McqQuestion>) {
           if (checked) {
             if (i === q.correct) cls += " is-correct";
             else if (i === pick) cls += " is-wrong";
-          } else if (i === pick) cls += " is-selected";
+          }
           return (
-            <button key={i} className={cls} disabled={checked} onClick={() => setPick(i)}>
+            <button key={i} className={cls} disabled={checked} onClick={() => choose(i)}>
               {o}
             </button>
           );
         })}
       </div>
-      <CardActions
-        checked={checked}
-        canCheck={pick !== null}
-        onCheck={() => {
-          setChecked(true);
-          onResult(ok);
-        }}
-        onReset={() => {
-          setChecked(false);
-          setPick(null);
-        }}
-      />
-      {checked && <Verdict ok={ok} explain={q.explain} />}
+      {checked && <Verdict ok={pick === q.correct} explain={q.explain} />}
     </>
   );
 }
 
-/* ---------- TAP (inline word chips) ---------- */
 function TapCard({ q, onResult }: CardProps<TapQuestion>) {
   const [pick, setPick] = useState<number | null>(null);
-  const [checked, setChecked] = useState(false);
-  const ok = pick === q.correct;
+  const checked = pick !== null;
+  const choose = (i: number) => {
+    if (pick !== null) return;
+    setPick(i);
+    onResult(i === q.correct);
+  };
   return (
     <>
       <div className="sq-tap">
@@ -141,44 +121,35 @@ function TapCard({ q, onResult }: CardProps<TapQuestion>) {
           if (checked) {
             if (i === q.correct) cls += " is-correct";
             else if (i === pick) cls += " is-wrong";
-          } else if (i === pick) cls += " is-selected";
+          }
           return (
-            <button key={i} className={cls} disabled={checked} onClick={() => setPick(i)}>
+            <button key={i} className={cls} disabled={checked} onClick={() => choose(i)}>
               {w}
             </button>
           );
         })}
       </div>
-      <CardActions
-        checked={checked}
-        canCheck={pick !== null}
-        onCheck={() => {
-          setChecked(true);
-          onResult(ok);
-        }}
-        onReset={() => {
-          setChecked(false);
-          setPick(null);
-        }}
-      />
-      {checked && <Verdict ok={ok} explain={q.explain} />}
+      {checked && <Verdict ok={pick === q.correct} explain={q.explain} />}
     </>
   );
 }
 
-/* ---------- TRUE / FALSE ---------- */
 function TrueFalseCard({ q, onResult }: CardProps<TrueFalseQuestion>) {
   const [pick, setPick] = useState<boolean | null>(null);
-  const [checked, setChecked] = useState(false);
-  const ok = pick === q.answer;
+  const checked = pick !== null;
+  const choose = (val: boolean) => {
+    if (pick !== null) return;
+    setPick(val);
+    onResult(val === q.answer);
+  };
   const opt = (val: boolean, label: string) => {
     let cls = "sq-opt sq-tf";
     if (checked) {
       if (val === q.answer) cls += " is-correct";
       else if (val === pick) cls += " is-wrong";
-    } else if (val === pick) cls += " is-selected";
+    }
     return (
-      <button className={cls} disabled={checked} onClick={() => setPick(val)}>
+      <button className={cls} disabled={checked} onClick={() => choose(val)}>
         {label}
       </button>
     );
@@ -189,29 +160,59 @@ function TrueFalseCard({ q, onResult }: CardProps<TrueFalseQuestion>) {
         {opt(true, "True")}
         {opt(false, "False")}
       </div>
-      <CardActions
-        checked={checked}
-        canCheck={pick !== null}
-        onCheck={() => {
-          setChecked(true);
-          onResult(ok);
-        }}
-        onReset={() => {
-          setChecked(false);
-          setPick(null);
-        }}
-      />
-      {checked && <Verdict ok={ok} explain={q.explain} />}
+      {checked && <Verdict ok={pick === q.answer} explain={q.explain} />}
     </>
   );
 }
 
-/* ---------- MULTI (select all) ---------- */
+function ClozeCard({ q, onResult }: CardProps<ClozeQuestion>) {
+  const [pick, setPick] = useState<number | null>(null);
+  const checked = pick !== null;
+  const [before, after] = useMemo(() => {
+    const idx = q.text.indexOf("___");
+    return idx >= 0 ? [q.text.slice(0, idx), q.text.slice(idx + 3)] : [q.text + " ", ""];
+  }, [q.text]);
+  const choose = (i: number) => {
+    if (pick !== null) return;
+    setPick(i);
+    onResult(i === q.correct);
+  };
+  const blankText = pick !== null ? q.options[pick] : "______";
+  return (
+    <>
+      <p className="sq-cloze-text">
+        {before}
+        <span className={"sq-blank" + (checked ? (pick === q.correct ? " is-correct" : " is-wrong") : "")}>{blankText}</span>
+        {after}
+      </p>
+      <div className="sq-opts sq-opts-inline">
+        {q.options.map((o, i) => {
+          let cls = "sq-opt sq-chip";
+          if (checked) {
+            if (i === q.correct) cls += " is-correct";
+            else if (i === pick) cls += " is-wrong";
+          }
+          return (
+            <button key={i} className={cls} disabled={checked} onClick={() => choose(i)}>
+              {o}
+            </button>
+          );
+        })}
+      </div>
+      {checked && <Verdict ok={pick === q.correct} explain={q.explain} />}
+    </>
+  );
+}
+
+/* ---------- multi-step types: Check button ---------- */
 function MultiCard({ q, onResult }: CardProps<MultiQuestion>) {
   const [picks, setPicks] = useState<number[]>([]);
   const [checked, setChecked] = useState(false);
   const ok = sameSet(picks, q.correct);
-  const toggle = (i: number) => setPicks((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
+  const toggle = (i: number) => {
+    if (checked) return;
+    setPicks((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
+  };
   return (
     <>
       <div className="sq-opts">
@@ -231,77 +232,27 @@ function MultiCard({ q, onResult }: CardProps<MultiQuestion>) {
           );
         })}
       </div>
-      <CardActions
-        checked={checked}
-        canCheck={picks.length > 0}
-        onCheck={() => {
-          setChecked(true);
-          onResult(ok);
-        }}
-        onReset={() => {
-          setChecked(false);
-          setPicks([]);
-        }}
-      />
-      {checked && <Verdict ok={ok} explain={q.explain} />}
+      {!checked ? (
+        <CheckButton
+          disabled={picks.length === 0}
+          onClick={() => {
+            setChecked(true);
+            onResult(ok);
+          }}
+        />
+      ) : (
+        <Verdict ok={ok} explain={q.explain} />
+      )}
     </>
   );
 }
 
-/* ---------- CLOZE (fill the blank) ---------- */
-function ClozeCard({ q, onResult }: CardProps<ClozeQuestion>) {
-  const [pick, setPick] = useState<number | null>(null);
-  const [checked, setChecked] = useState(false);
-  const ok = pick === q.correct;
-  const [before, after] = useMemo(() => {
-    const idx = q.text.indexOf("___");
-    return idx >= 0 ? [q.text.slice(0, idx), q.text.slice(idx + 3)] : [q.text + " ", ""];
-  }, [q.text]);
-  const blankText = pick !== null ? q.options[pick] : "______";
-  return (
-    <>
-      <p className="sq-cloze-text">
-        {before}
-        <span className={"sq-blank" + (checked ? (ok ? " is-correct" : " is-wrong") : pick !== null ? " is-filled" : "")}>{blankText}</span>
-        {after}
-      </p>
-      <div className="sq-opts sq-opts-inline">
-        {q.options.map((o, i) => {
-          let cls = "sq-opt sq-chip";
-          if (checked) {
-            if (i === q.correct) cls += " is-correct";
-            else if (i === pick) cls += " is-wrong";
-          } else if (i === pick) cls += " is-selected";
-          return (
-            <button key={i} className={cls} disabled={checked} onClick={() => setPick(i)}>
-              {o}
-            </button>
-          );
-        })}
-      </div>
-      <CardActions
-        checked={checked}
-        canCheck={pick !== null}
-        onCheck={() => {
-          setChecked(true);
-          onResult(ok);
-        }}
-        onReset={() => {
-          setChecked(false);
-          setPick(null);
-        }}
-      />
-      {checked && <Verdict ok={ok} explain={q.explain} />}
-    </>
-  );
-}
-
-/* ---------- SEQUENCE (reorder) ---------- */
 function SequenceCard({ q, onResult }: CardProps<SequenceQuestion>) {
   const [order, setOrder] = useState<number[]>(() => shuffledOrder(q.items.length));
   const [checked, setChecked] = useState(false);
   const ok = order.every((v, i) => v === i);
   const move = (pos: number, dir: -1 | 1) => {
+    if (checked) return;
     const target = pos + dir;
     if (target < 0 || target >= order.length) return;
     setOrder((o) => {
@@ -334,24 +285,21 @@ function SequenceCard({ q, onResult }: CardProps<SequenceQuestion>) {
           );
         })}
       </ol>
-      <CardActions
-        checked={checked}
-        canCheck={true}
-        onCheck={() => {
-          setChecked(true);
-          onResult(ok);
-        }}
-        onReset={() => {
-          setChecked(false);
-          setOrder(shuffledOrder(q.items.length));
-        }}
-      />
-      {checked && <Verdict ok={ok} explain={q.explain} />}
+      {!checked ? (
+        <CheckButton
+          disabled={false}
+          onClick={() => {
+            setChecked(true);
+            onResult(ok);
+          }}
+        />
+      ) : (
+        <Verdict ok={ok} explain={q.explain} />
+      )}
     </>
   );
 }
 
-/* ---------- MATCH (pair left to right) ---------- */
 function MatchCard({ q, onResult }: CardProps<MatchQuestion>) {
   const rights = useMemo(() => shuffle(q.pairs.map((p) => p[1])), [q.pairs]);
   const [assign, setAssign] = useState<(string | "")[]>(() => q.pairs.map(() => ""));
@@ -385,24 +333,21 @@ function MatchCard({ q, onResult }: CardProps<MatchQuestion>) {
           );
         })}
       </div>
-      <CardActions
-        checked={checked}
-        canCheck={allChosen}
-        onCheck={() => {
-          setChecked(true);
-          onResult(ok);
-        }}
-        onReset={() => {
-          setChecked(false);
-          setAssign(q.pairs.map(() => ""));
-        }}
-      />
-      {checked && <Verdict ok={ok} explain={q.explain} />}
+      {!checked ? (
+        <CheckButton
+          disabled={!allChosen}
+          onClick={() => {
+            setChecked(true);
+            onResult(ok);
+          }}
+        />
+      ) : (
+        <Verdict ok={ok} explain={q.explain} />
+      )}
     </>
   );
 }
 
-/* ---------- SHORT (open response) ---------- */
 function ShortCard({ q, onResult }: CardProps<ShortQuestion>) {
   const [text, setText] = useState("");
   const [checked, setChecked] = useState(false);
@@ -413,7 +358,6 @@ function ShortCard({ q, onResult }: CardProps<ShortQuestion>) {
     return q.keywords.filter((k) => lc.includes(k.toLowerCase()));
   }, [text, q.keywords]);
   const autoGraded = !!q.keywords?.length;
-  const ok = autoGraded ? hits.length >= 1 : selfOk === true;
 
   return (
     <>
@@ -426,20 +370,18 @@ function ShortCard({ q, onResult }: CardProps<ShortQuestion>) {
         onChange={(e) => setText(e.target.value)}
       />
       {!checked ? (
-        <CardActions
-          checked={false}
-          canCheck={text.trim().length > 0}
-          onCheck={() => {
+        <CheckButton
+          disabled={text.trim().length === 0}
+          onClick={() => {
             setChecked(true);
             if (autoGraded) onResult(hits.length >= 1);
           }}
-          onReset={() => {}}
         />
       ) : (
         <div className="sq-short-review">
           {autoGraded ? (
             <Verdict
-              ok={ok}
+              ok={hits.length >= 1}
               explain={
                 (hits.length ? `You used ${hits.length} key idea${hits.length > 1 ? "s" : ""}: ${hits.join(", ")}. ` : "Try to include a key idea from the story. ") +
                 (q.explain ?? "")
@@ -470,22 +412,12 @@ function ShortCard({ q, onResult }: CardProps<ShortQuestion>) {
               </div>
             </div>
           ) : (
-            <Verdict ok={ok} explain={q.explain} />
+            <Verdict ok={selfOk === true} explain={q.explain} />
           )}
           <div className="sq-sample">
             <span className="sq-sample-label">Sample answer</span>
             <p>{q.sample}</p>
           </div>
-          <button
-            className="sq-retry"
-            onClick={() => {
-              setChecked(false);
-              setSelfOk(null);
-              setText("");
-            }}
-          >
-            ↺ Try again
-          </button>
         </div>
       )}
     </>
@@ -516,53 +448,72 @@ function QuestionBody({ q, onResult }: { q: StoryQuestion; onResult: (ok: boolea
   }
 }
 
-function QuestionCard({ q, n, onResult }: { q: StoryQuestion; n: number; onResult: (ok: boolean) => void }) {
-  return (
-    <div className="sq-card">
-      <div className="sq-card-head">
-        <span className="sq-num">Q{n}</span>
-        <span className="sq-type">{TYPE_LABEL[q.type]}</span>
-      </div>
-      <div className="sq-prompt">{q.prompt}</div>
-      {q.hint && <div className="sq-hint">💡 {q.hint}</div>}
-      <QuestionBody q={q} onResult={onResult} />
-    </div>
-  );
-}
-
-export default function StoryQuestions({ questions, title = "Comprehension check" }: { questions: StoryQuestion[]; title?: string }) {
+export default function StoryQuestions({
+  questions,
+  onContinue,
+  continueLabel,
+}: {
+  questions: StoryQuestion[];
+  onContinue?: () => void;
+  continueLabel?: string;
+}) {
   const [results, setResults] = useState<Record<string, boolean>>({});
+  const [current, setCurrent] = useState(0);
   const setResult = useCallback((id: string, ok: boolean) => setResults((r) => ({ ...r, [id]: ok })), []);
 
-  if (!questions || questions.length === 0) return null;
-
+  const total = questions.length;
   const answered = Object.keys(results).length;
   const correct = Object.values(results).filter(Boolean).length;
-  const allDone = answered >= questions.length;
+
+  if (!total) return null;
+
+  const curId = questions[current].id;
+  const curAnswered = results[curId] !== undefined;
+  const isLast = current >= total - 1;
+  const navHint = !curAnswered ? "Choose your answer" : isLast ? "That's the last question" : "On to the next one";
 
   return (
-    <div className="sq-list">
-      <div className="sq-head">
-        <div className="sq-head-title">
-          {title} <span className="sq-count">{questions.length} questions</span>
-        </div>
-        <div className="sq-progress">
-          {answered}/{questions.length} answered{answered ? ` · ${correct} correct` : ""}
-        </div>
+    <div className="sq-flip">
+      <div className="sq-flip-head">
+        <span className="sq-flip-title">Comprehension check</span>
+        <span className="sq-flip-count">
+          {answered} / {total} answered{answered ? ` · ${correct} correct` : ""}
+        </span>
       </div>
-      {questions.map((q, i) => (
-        <QuestionCard key={q.id} q={q} n={i + 1} onResult={(ok) => setResult(q.id, ok)} />
-      ))}
-      {allDone && (
-        <div className={"sq-summary " + (correct === questions.length ? "perfect" : "")}>
-          <span className="sq-summary-score">
-            {correct} / {questions.length}
-          </span>
-          <span className="sq-summary-label">
-            {correct === questions.length ? "Perfect — every answer correct! 🎉" : correct >= questions.length / 2 ? "Nice work! Review the ones you missed." : "Good effort — try the tricky ones again."}
-          </span>
+      <div className="sq-rail">
+        {questions.map((qq, i) => (
+          <span key={qq.id} className={"sq-seg" + (i === current ? " current" : results[qq.id] !== undefined ? " done" : "")} />
+        ))}
+      </div>
+      <div className="sq-step-label">
+        Question {current + 1} of {total} <span className="sq-step-type">· {TYPE_LABEL[questions[current].type]}</span>
+      </div>
+
+      {/* All questions stay mounted (state preserved when flipping); only the
+          current one is shown — so there's no long scroll. */}
+      {questions.map((qq, i) => (
+        <div key={qq.id} className="sq-q" style={{ display: i === current ? "block" : "none" }}>
+          <div className="sq-prompt-box">{qq.prompt}</div>
+          {qq.hint && <div className="sq-hint">💡 {qq.hint}</div>}
+          <QuestionBody q={qq} onResult={(ok) => setResult(qq.id, ok)} />
         </div>
-      )}
+      ))}
+
+      <div className="sq-nav">
+        <button className="sq-nav-btn prev" disabled={current === 0} onClick={() => setCurrent((c) => Math.max(0, c - 1))}>
+          ← Previous
+        </button>
+        <span className="sq-nav-hint">{navHint}</span>
+        {isLast && onContinue ? (
+          <button className="sq-nav-btn next" onClick={onContinue}>
+            {continueLabel ?? "Continue →"}
+          </button>
+        ) : (
+          <button className="sq-nav-btn next" disabled={isLast} onClick={() => setCurrent((c) => Math.min(total - 1, c + 1))}>
+            Next →
+          </button>
+        )}
+      </div>
     </div>
   );
 }

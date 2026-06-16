@@ -137,7 +137,17 @@ function Listen({ story }: { story: Story }) {
 }
 
 // ---- READ ----
-function Read({ story, onVocab }: { story: Story; onVocab: (v: VocabPopup) => void }) {
+function Read({
+  story,
+  onVocab,
+  onContinue,
+  continueLabel,
+}: {
+  story: Story;
+  onVocab: (v: VocabPopup) => void;
+  onContinue: () => void;
+  continueLabel: string;
+}) {
   return (
     <div className="story-player-body story-read-body">
       <div className="read-passage-label">{story.read.label}</div>
@@ -166,7 +176,7 @@ function Read({ story, onVocab }: { story: Story; onVocab: (v: VocabPopup) => vo
             ))}
         </div>
       </div>
-      <StoryQuestions questions={story.read.questions} />
+      <StoryQuestions questions={story.read.questions} onContinue={onContinue} continueLabel={continueLabel} />
     </div>
   );
 }
@@ -220,9 +230,17 @@ function Speak({ story }: { story: Story }) {
 }
 
 // ---- WRITE ----
+const WRITE_MIN_WORDS = 30;
 function Write({ story }: { story: Story }) {
-  const [done, setDone] = useState(false);
   const w = story.write;
+  const [text, setText] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const canSubmit = words >= WRITE_MIN_WORDS;
+  const submit = () => {
+    if (!canSubmit || submitted) return;
+    setSubmitted(true);
+  };
   return (
     <div className="story-player-body">
       <div className="write-prompt">
@@ -243,28 +261,27 @@ function Write({ story }: { story: Story }) {
       </div>
 
       <div className="write-editor-wrap">
-        <div className="write-editor">
-          <div className="write-editor-content">
-            {w.sample.map((p, i) => (
-              <p key={i}>
-                {p}
-                {i === w.sample.length - 1 && <span className="write-cursor">|</span>}
-              </p>
-            ))}
-          </div>
-        </div>
+        <textarea
+          className="write-textarea"
+          placeholder="Write your entry here in your own words…"
+          value={text}
+          disabled={submitted}
+          onChange={(e) => setText(e.target.value)}
+          rows={8}
+        />
         <div className="write-editor-foot">
-          <span>
-            {w.words} words · {w.paras} paragraphs
+          <span className={canSubmit ? "wc-ok" : "wc-low"}>
+            {words} word{words === 1 ? "" : "s"}
+            {canSubmit ? "" : ` · write at least ${WRITE_MIN_WORDS}`}
           </span>
-          <span className="write-saved">Saved ✓</span>
+          {submitted && <span className="write-saved">Submitted ✓</span>}
         </div>
       </div>
 
-      {!done ? (
+      {!submitted ? (
         <div className="write-cta-row">
-          <button className="btn-primary" onClick={() => setDone(true)}>
-            ✨ Get AI feedback
+          <button className="btn-primary" disabled={!canSubmit} onClick={submit}>
+            Submit entry
           </button>
         </div>
       ) : (
@@ -483,17 +500,21 @@ export default function StoryExperiencePage() {
           </header>
 
           {stepKey === "listen" && <Listen story={story} />}
-          {stepKey === "read" && <Read story={story} onVocab={setVocab} />}
+          {stepKey === "read" && <Read story={story} onVocab={setVocab} onContinue={next} continueLabel={FOOT.read.cta} />}
           {stepKey === "vocab" && <VocabGame story={story} />}
           {stepKey === "speak" && <Speak story={story} />}
           {stepKey === "write" && <Write story={story} />}
 
-          <div className="story-player-foot">
-            <div className="foot-hint">{FOOT[stepKey].hint}</div>
-            <button className="btn-primary" onClick={next}>
-              {FOOT[stepKey].cta}
-            </button>
-          </div>
+          {/* Read carries its own "Continue" inside the question nav (in the Next
+              slot on the last question); every other step uses the footer. */}
+          {!(stepKey === "read" && story.read.questions.length > 0) && (
+            <div className="story-player-foot">
+              <div className="foot-hint">{FOOT[stepKey].hint}</div>
+              <button className="btn-primary" onClick={next}>
+                {FOOT[stepKey].cta}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

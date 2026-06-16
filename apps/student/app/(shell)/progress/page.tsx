@@ -196,7 +196,7 @@ export default function Progress() {
           wash="var(--writing-wash)"
           big={`${PD.workouts.done}`}
           label="Workouts completed"
-          sub={`${PD.workouts.assigned - PD.workouts.done} still to try`}
+          sub="Self-paced practice this term"
         />
         <Kpi icon="star" tint="var(--speaking)" wash="var(--speaking-wash)" big={`${PD.storyAccuracy}%`} label="Avg. accuracy · stories" sub="across all stories" />
         <Kpi icon="star" tint="var(--gold-deep)" wash="var(--gold-wash)" big={`${PD.workoutAccuracy}%`} label="Avg. accuracy · workouts" sub="across all workouts" />
