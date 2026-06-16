@@ -94,3 +94,48 @@ test("student opens a story → coach sees it live across domains → student dr
   await coachCtx.close();
   await studentCtx.close();
 });
+
+test("coach mirrors the student's answer visual (same option, same green/red verdict)", async ({
+  browser,
+}) => {
+  const coachCtx = await browser.newContext({ ...DESKTOP, baseURL: COACH_URL });
+  const studentCtx = await browser.newContext({ ...DESKTOP, baseURL: STUDENT_URL });
+  const coach = await coachCtx.newPage();
+  const student = await studentCtx.newPage();
+
+  await login(coach, "liza", "liza123");
+  await login(student, "maya", "maya123");
+
+  await coach.goto("/live");
+  await coach.getByRole("button", { name: /Start class/i }).click();
+  await student.goto("/live");
+  await expect(student.locator(".ct-story")).toContainText("The First Flight", { timeout: 15_000 });
+
+  // Student drives to the first question: cover (Step 1) → listen (Step 2) →
+  // first question (Step 3, an mcq for the configured G3 story).
+  const studentNext = student.getByRole("button", { name: /^Next/i });
+  await studentNext.click();
+  await studentNext.click();
+  await expect(student.locator(".ex-counter")).toContainText("Step 3", { timeout: 10_000 });
+  await expect(coach.locator(".ex-counter")).toContainText("Step 3", { timeout: 10_000 });
+
+  // The child answers — the option grid renders on both screens.
+  const studentOpt0 = student.locator(".ge-opts .ge-opt").first();
+  const coachOpt0 = coach.locator(".ge-opts .ge-opt").first();
+  await expect(studentOpt0).toBeVisible();
+  await studentOpt0.click();
+
+  // The child sees their pick locked in with a verdict (green if right, red if wrong).
+  await expect(studentOpt0).toHaveClass(/ge-opt-picked/);
+  const studentClass = (await studentOpt0.getAttribute("class")) ?? "";
+  const verdict = studentClass.includes("ge-opt-right") ? /ge-opt-right/ : /ge-opt-wrong/;
+
+  // THE MIRROR — the coach screen shows the SAME option with the SAME verdict
+  // (cross-origin Realtime), and the old text note is gone.
+  await expect(coachOpt0).toHaveClass(/ge-opt-picked/, { timeout: 10_000 });
+  await expect(coachOpt0).toHaveClass(verdict, { timeout: 10_000 });
+  await expect(coach.locator(".ws-answer-note")).toHaveCount(0);
+
+  await coachCtx.close();
+  await studentCtx.close();
+});

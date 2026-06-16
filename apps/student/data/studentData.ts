@@ -224,6 +224,8 @@ export interface GamifyAlert {
 export interface Gamify {
   belts: Belt[];
   beltIndex: number;
+  points: number;
+  beltTarget: number;
   gateTarget: number;
   skills: GamifySkill[];
   level: { current: number; total: number; storiesDone: number; storiesTotal: number };
@@ -536,12 +538,12 @@ const SKILL_STATUS: Record<SkillId, { mastered: number; practised: number }> = {
 const progressSkills: ProgressSkill[] = SKILLS.map((s) => {
   const st = SKILL_STATUS[s.id] || { mastered: 0, practised: 0 };
   const open = Math.max(0, s.level - st.mastered - st.practised);
-  const locked = 15 - s.level;
+  const locked = 8 - s.level;
   return { ...s, mastered: st.mastered, practised: st.practised, open, locked };
 });
 const PROGRESS: Progress = {
   termsCompleted: 0, termsTotal: 3, currentTerm: 1, termName: "Foundations",
-  levelsPerSkill: 15,
+  levelsPerSkill: 8,
   levelsUnlocked: progressSkills.reduce((a, s) => a + s.level, 0),
   levelsMastered: progressSkills.reduce((a, s) => a + s.mastered, 0),
   skills: progressSkills,
@@ -749,6 +751,10 @@ const BELTS: Belt[] = [
 const GAMIFY: Gamify = {
   belts: BELTS,
   beltIndex: 1,
+  // Single belt-points scale used everywhere (Progress + Story finish): the
+  // student earns points from stories & workouts toward a 1,000-point belt gate.
+  points: 720,
+  beltTarget: 1000,
   gateTarget: 600,
   skills: [
     { id: "reading", name: "Reading", pts: 720, icon: "book", color: "var(--reading)", wash: "var(--reading-wash)" },
@@ -759,7 +765,7 @@ const GAMIFY: Gamify = {
   level: { current: 3, total: 8, storiesDone: 7, storiesTotal: 10 },
   alerts: [
     { icon: "book", tone: "level", text: "3 more stories to reach Level 4" },
-    { icon: "pencil", tone: "gate", text: "Writing is 170 points from your Orange belt" },
+    { icon: "pencil", tone: "gate", text: "280 points to go to earn your Orange belt" },
     { icon: "flag", tone: "milestone", text: "10 days until your Term 1 Assessment" },
   ],
 };

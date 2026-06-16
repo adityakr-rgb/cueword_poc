@@ -32,7 +32,7 @@ export default function LiveClass({
   onLeave,
   showPlaybook = false,
   headerActions,
-  answerNote,
+  reveal,
 }: {
   story: Story;
   storyKey: StoryKey;
@@ -48,7 +48,7 @@ export default function LiveClass({
   onLeave?: () => void;
   showPlaybook?: boolean;
   headerActions?: ReactNode;
-  answerNote?: string | null;
+  reveal?: AnswerPayload["choice"] | null;
 }) {
   const steps = buildSteps(story);
   const idx = Math.min(Math.max(stepIndex, 0), steps.length - 1);
@@ -60,7 +60,7 @@ export default function LiveClass({
       <div className="class-shell">
         <TopBar
           coachName={coachName}
-          storyTitle={`${story.cover} ${story.title} · ${story.grade}`}
+          storyTitle={`${story.cover} ${story.title}`}
           zoomLink={zoomLink}
           onLeave={onLeave}
           actions={headerActions}
@@ -78,7 +78,7 @@ export default function LiveClass({
             onAnswer={onAnswer}
             kidName={kidName}
             coachName={coachName}
-            answerNote={answerNote}
+            reveal={reveal}
           />
           {showPlaybook && (
             <aside className="class-playbook">

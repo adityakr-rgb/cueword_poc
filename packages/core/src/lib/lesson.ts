@@ -116,6 +116,28 @@ export function pickedAnswerLabel(q: Question, choice: AnswerPayload["choice"]):
   }
 }
 
+// Resolve what a question's option grid should DISPLAY, merging local
+// interaction state with a `reveal` — a peer's synced choice (e.g. the child's
+// pick mirrored onto the coach screen). Local interaction always wins; when
+// there is no local answer, the reveal stands in. Returns the same shape the
+// component already renders from.
+export function resolveReveal(
+  local: { picked: number | null; answered: boolean; multiSel: number[] },
+  reveal: AnswerPayload["choice"] | null | undefined,
+): { picked: number | null; answered: boolean; multiSel: number[] } {
+  const revealed = reveal != null; // note: 0 is a valid index, so use != null
+  return {
+    answered: local.answered || revealed,
+    picked:
+      local.picked !== null ? local.picked : typeof reveal === "number" ? reveal : null,
+    multiSel: local.multiSel.length
+      ? local.multiSel
+      : Array.isArray(reveal)
+        ? reveal
+        : local.multiSel,
+  };
+}
+
 // Learning outcome each skill (rung) targets — shown to the coach per question.
 export const OUTCOME: Record<string, string> = {
   Locate: "Locate information that is stated directly in the text.",

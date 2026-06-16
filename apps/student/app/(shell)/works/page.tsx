@@ -28,16 +28,15 @@ function TypeTag({ type, color, wash, suffix }: { type: WorkType; color?: string
   );
 }
 
-// NOTE: kept verbatim from the mockup — SECTION_ORDER uses "speaking" while the
-// data items use type "spoken", so the "speaking" section is always empty in the
-// "All" view (filtered out below). Spoken pieces show only under the "Speaking"
-// filter button (filter value "spoken"). Typed as string to mirror that quirk.
-const SECTION_ORDER: string[] = ["reading", "listening", "writing", "speaking"];
+// Section order for the "All" view. Voice pieces carry type "spoken" (matching
+// the data), so they appear here alongside the rest — not only under the
+// Speaking filter button. The skill lookup below maps "spoken" → "speaking".
+const SECTION_ORDER: string[] = ["reading", "listening", "writing", "spoken"];
 const SECTION_BLURB: Record<string, string> = {
   reading: "Comprehension exercises",
   listening: "Audio comprehension",
   writing: "Written pieces",
-  speaking: "Voice recordings",
+  spoken: "Voice recordings",
 };
 
 export default function Works() {

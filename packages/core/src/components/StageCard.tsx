@@ -99,14 +99,14 @@ function ActivityPane({
   storyKey,
   isDriver,
   onAnswer,
-  answerNote,
+  reveal,
 }: {
   story: Story;
   step: Step;
   storyKey: StoryKey;
   isDriver: boolean;
   onAnswer?: (e: Emit) => void;
-  answerNote?: string | null;
+  reveal?: AnswerPayload["choice"] | null;
 }) {
   if (step.kind === "listen") {
     return (
@@ -141,8 +141,7 @@ function ActivityPane({
         <div className="ws-qhead">
           Question {step.qi + 1} of {step.total}
         </div>
-        <QuestionView q={step.q} interactive={isDriver} onAnswer={onAnswer} />
-        {answerNote && <div className="ws-answer-note">{answerNote}</div>}
+        <QuestionView q={step.q} interactive={isDriver} onAnswer={onAnswer} reveal={reveal} />
       </>
     );
   }
@@ -213,7 +212,7 @@ export default function StageCard({
   isDriver,
   onVocab,
   onAnswer,
-  answerNote,
+  reveal,
 }: {
   story: Story;
   step: Step;
@@ -222,7 +221,7 @@ export default function StageCard({
   isDriver: boolean;
   onVocab: (word: string, def: string) => void;
   onAnswer?: (e: Emit) => void;
-  answerNote?: string | null;
+  reveal?: AnswerPayload["choice"] | null;
 }) {
   if (step.kind === "cover") {
     return (
@@ -255,9 +254,7 @@ export default function StageCard({
       <>
         <SceneBig story={story} tag="Story complete!" />
         <div className="ws-complete-body">
-          <div className="ex-complete-eyebrow">
-            {story.title} · {story.grade}
-          </div>
+          <div className="ex-complete-eyebrow">{story.title}</div>
           <h2 className="ex-complete-title">Great class, {kidName} 🎉</h2>
           <div className="ex-complete-recap">
             <div className="ex-recap-item">
@@ -344,7 +341,7 @@ export default function StageCard({
             storyKey={storyKey}
             isDriver={isDriver}
             onAnswer={onAnswer}
-            answerNote={answerNote}
+            reveal={reveal}
           />
         </div>
       </div>

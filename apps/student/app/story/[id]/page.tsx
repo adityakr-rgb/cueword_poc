@@ -11,6 +11,7 @@ import SetupNotice from "@cueword/core/components/SetupNotice";
 import { isSupabaseConfigured } from "@cueword/core/lib/supabase/client";
 import { useCurrentUser } from "@cueword/core/lib/auth";
 import VocabGame from "@/components/VocabGame";
+import StoryQuestions from "@/components/StoryQuestions";
 import { DATA } from "@/data/studentData";
 import { STORY_LIB, type SceneKind, type SpeakFeedback, type Story } from "@/data/storyLib";
 
@@ -137,8 +138,6 @@ function Listen({ story }: { story: Story }) {
 
 // ---- READ ----
 function Read({ story, onVocab }: { story: Story; onVocab: (v: VocabPopup) => void }) {
-  const [picked, setPicked] = useState<number | null>(null);
-  const q = story.read.question;
   return (
     <div className="story-player-body story-read-body">
       <div className="read-passage-label">{story.read.label}</div>
@@ -167,24 +166,7 @@ function Read({ story, onVocab }: { story: Story; onVocab: (v: VocabPopup) => vo
             ))}
         </div>
       </div>
-      <div className="read-questions">
-        <div className="rq-label">Quick check</div>
-        <div className="rq-q">{q.q}</div>
-        <div className="rq-options">
-          {q.opts.map((o, i) => {
-            let cls = "rq-opt";
-            if (picked !== null) {
-              if (o.correct) cls += " picked-right";
-              else if (i === picked) cls += " picked-wrong";
-            }
-            return (
-              <button key={i} className={cls} disabled={picked !== null} onClick={() => setPicked(i)}>
-                {o.t}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <StoryQuestions questions={story.read.questions} />
     </div>
   );
 }
@@ -475,7 +457,9 @@ export default function StoryExperiencePage() {
     speak: { hint: "Last step — write this moment in your own words.", cta: "Continue to Writing →" },
     write: { hint: "Chapter complete! Let's see what you earned.", cta: "Finish chapter →" },
   };
-  const belt = DATA.GAMIFY ? { name: DATA.GAMIFY.belts[DATA.GAMIFY.beltIndex].name, pts: 340, target: 1000 } : null;
+  const belt = DATA.GAMIFY
+    ? { name: DATA.GAMIFY.belts[DATA.GAMIFY.beltIndex].name, pts: DATA.GAMIFY.points, target: DATA.GAMIFY.beltTarget }
+    : null;
 
   return (
     <div className="cw-story" style={{ "--story-c": story.themeColor } as CSSProperties}>

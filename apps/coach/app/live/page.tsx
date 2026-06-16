@@ -19,7 +19,7 @@ import {
   toRenderState,
 } from "@cueword/core/lib/session";
 import { getStory } from "@cueword/core/lib/stories";
-import { buildSteps, pickedAnswerLabel, stepPhase } from "@cueword/core/lib/lesson";
+import { buildSteps, stepPhase } from "@cueword/core/lib/lesson";
 import type { AnswerPayload } from "@cueword/core/lib/types";
 
 export default function CoachLivePage() {
@@ -99,11 +99,12 @@ export default function CoachLivePage() {
         void setDriver(session.id, next);
       };
       const curStep = steps[idx];
-      const answerNote =
+      // Mirror the child's answer visual onto the coach screen: feed their
+      // synced pick into the same QuestionView the child sees (green = correct,
+      // red = wrong), instead of a text note.
+      const reveal =
         lastAnswer && lastAnswer.stepIndex === idx && curStep.kind === "q"
-          ? `${studentName} ticked "${pickedAnswerLabel(curStep.q, lastAnswer.choice)}" ${
-              lastAnswer.correct ? "✓ correct" : "✗ wrong answer"
-            }`
+          ? lastAnswer.choice
           : null;
 
       return (
@@ -117,7 +118,7 @@ export default function CoachLivePage() {
           kidName={studentName}
           zoomLink={zoomLink}
           showPlaybook
-          answerNote={answerNote}
+          reveal={reveal}
           onNext={() => go(idx + 1)}
           onPrev={() => go(idx - 1)}
           onLeave={() => {

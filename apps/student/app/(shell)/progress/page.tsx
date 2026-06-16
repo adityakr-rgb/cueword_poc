@@ -17,9 +17,8 @@ export default function Progress() {
 
   const belt = G.belts[G.beltIndex];
   const nextBelt = G.belts[G.beltIndex + 1];
-  const minPts = Math.min(...G.skills.map((x) => x.pts));
-  const beltPct = Math.min(100, Math.round((minPts / G.gateTarget) * 100));
-  const blocker = G.skills.filter((x) => x.pts < G.gateTarget).sort((a, b) => a.pts - b.pts)[0];
+  const beltPct = Math.min(100, Math.round((G.points / G.beltTarget) * 100));
+  const ptsToGo = Math.max(0, G.beltTarget - G.points);
 
   return (
     <div className="page page-wide view-enter">
@@ -81,8 +80,8 @@ export default function Progress() {
             {beltPct}% of the way to {nextBelt.name}
           </div>
           <div className="belt-sub">
-            A belt is earned across <b>all four skills</b> — not one. {s.first} is strong in Reading, but <b>{blocker.name}</b> needs{" "}
-            {G.gateTarget - blocker.pts} more points before the {nextBelt.name} belt unlocks.
+            Every story and workout {s.first} finishes earns points toward the next belt. She has <b>{G.points}</b> of the{" "}
+            <b>{G.beltTarget.toLocaleString()}</b> points needed — just {ptsToGo} more to unlock the {nextBelt.name} belt.
           </div>
           <div className="belt-bar">
             {G.belts.map((b, i) => (
@@ -97,53 +96,38 @@ export default function Progress() {
         </div>
       </div>
 
-      {/* Multi-skill gates */}
+      {/* Points toward the next belt — one shared 1,000-point total */}
       <div className="gate-card">
         <div className="gate-head">
           <Ic.target size={22} stroke="var(--gold-deep)" />
           <div className="gh-txt">
-            <div className="gate-title">What it takes to level up</div>
+            <div className="gate-title">Points to your next belt</div>
             <div className="gate-note">
-              Each skill earns its own points. The next belt opens only when <b>every</b> skill reaches {G.gateTarget} — so a high Reading
-              score can&apos;t carry a low one.
+              {s.first} earns points from every story and workout she finishes. Reach <b>{G.beltTarget.toLocaleString()}</b> points to
+              unlock the {nextBelt.name} belt.
             </div>
           </div>
         </div>
         <div className="gate-grid">
-          {G.skills.map((sk) => {
-            const Cic = Ic[sk.icon] || Ic.book;
-            const met = sk.pts >= G.gateTarget;
-            const pct = Math.min(100, (sk.pts / G.gateTarget) * 100);
-            return (
-              <div key={sk.id} className="gate-row">
-                <span className="gate-ico" style={{ background: sk.wash, color: sk.color }}>
-                  <Cic size={18} stroke={sk.color} />
+          <div className="gate-row">
+            <span className="gate-ico" style={{ background: "var(--gold-wash)", color: "var(--gold-deep)" }}>
+              <Ic.star size={18} stroke="var(--gold-deep)" />
+            </span>
+            <div className="gate-body">
+              <div className="gate-top">
+                <span className="gate-name">Total points earned</span>
+                <span className="gate-pts short">
+                  {G.points} / {G.beltTarget.toLocaleString()}
                 </span>
-                <div className="gate-body">
-                  <div className="gate-top">
-                    <span className="gate-name">{sk.name}</span>
-                    <span className={"gate-pts " + (met ? "met" : "short")}>
-                      {sk.pts} / {G.gateTarget}
-                    </span>
-                  </div>
-                  <div className="gate-bar">
-                    <i style={{ width: `${pct}%`, background: met ? "var(--good)" : sk.color }} />
-                  </div>
-                  <span className={"gate-status " + (met ? "met" : "short")}>
-                    {met ? (
-                      <>
-                        <Ic.check size={13} /> Ready
-                      </>
-                    ) : (
-                      <>
-                        <Ic.lock size={12} /> {G.gateTarget - sk.pts} pts to go
-                      </>
-                    )}
-                  </span>
-                </div>
               </div>
-            );
-          })}
+              <div className="gate-bar">
+                <i style={{ width: `${beltPct}%`, background: "var(--gold-deep)" }} />
+              </div>
+              <span className="gate-status short">
+                <Ic.star size={12} /> {ptsToGo} points to the {nextBelt.name} belt
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

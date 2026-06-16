@@ -7,6 +7,7 @@ import {
   nudgesFor,
   outcomeFor,
   pickedAnswerLabel,
+  resolveReveal,
   stepPhase,
   teachFor,
 } from "@/lib/lesson";
@@ -111,5 +112,52 @@ describe("pickedAnswerLabel (what the student ticked, shown to the coach)", () =
     if (multi.type === "multi") {
       expect(pickedAnswerLabel(multi, [0, 1])).toContain(multi.opts[0]);
     }
+  });
+});
+
+describe("resolveReveal (mirror the child's pick onto the coach screen)", () => {
+  const NONE = { picked: null, answered: false, multiSel: [] as number[] };
+
+  it("passes local state through untouched when there is no reveal (student path)", () => {
+    expect(resolveReveal(NONE, null)).toEqual({
+      picked: null,
+      answered: false,
+      multiSel: [],
+    });
+    expect(resolveReveal(NONE, undefined)).toEqual({
+      picked: null,
+      answered: false,
+      multiSel: [],
+    });
+    expect(resolveReveal({ picked: 2, answered: true, multiSel: [] }, null)).toEqual({
+      picked: 2,
+      answered: true,
+      multiSel: [],
+    });
+  });
+
+  it("treats a reveal of 0 as answered (guards the 0-is-falsy trap)", () => {
+    // mcq whose correct/first option is index 0 — must NOT be read as 'no answer'.
+    expect(resolveReveal(NONE, 0)).toEqual({ picked: 0, answered: true, multiSel: [] });
+  });
+
+  it("maps a numeric reveal to the picked index (mcq / cloze / true-false)", () => {
+    expect(resolveReveal(NONE, 1)).toEqual({ picked: 1, answered: true, multiSel: [] });
+  });
+
+  it("maps an array reveal to multiSel (multi-select questions)", () => {
+    expect(resolveReveal(NONE, [0, 2])).toEqual({
+      picked: null,
+      answered: true,
+      multiSel: [0, 2],
+    });
+  });
+
+  it("lets a local pick win over the reveal (driver who already answered)", () => {
+    expect(resolveReveal({ picked: 3, answered: true, multiSel: [] }, 0)).toEqual({
+      picked: 3,
+      answered: true,
+      multiSel: [],
+    });
   });
 });

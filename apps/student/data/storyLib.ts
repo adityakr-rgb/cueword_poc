@@ -18,10 +18,70 @@ export interface PassageSegment {
   def?: string;
 }
 
-export interface ReadOption {
-  t: string;
-  correct: boolean;
+// ---- Comprehension questions — 8 interactive types -------------------------
+export type QuestionType = "mcq" | "multi" | "truefalse" | "cloze" | "sequence" | "match" | "short" | "tap";
+
+interface QuestionBase {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  hint?: string;
+  explain?: string;
 }
+/** Single correct option. */
+export interface McqQuestion extends QuestionBase {
+  type: "mcq";
+  options: string[];
+  correct: number;
+}
+/** One or more correct options (select-all). */
+export interface MultiQuestion extends QuestionBase {
+  type: "multi";
+  options: string[];
+  correct: number[];
+}
+export interface TrueFalseQuestion extends QuestionBase {
+  type: "truefalse";
+  answer: boolean;
+}
+/** Fill the blank — `text` contains "___" where the answer goes. */
+export interface ClozeQuestion extends QuestionBase {
+  type: "cloze";
+  text: string;
+  options: string[];
+  correct: number;
+}
+/** `items` are stored in the CORRECT order; the player shuffles them. */
+export interface SequenceQuestion extends QuestionBase {
+  type: "sequence";
+  items: string[];
+}
+/** Each pair is [left, right]; the player shuffles the right column. */
+export interface MatchQuestion extends QuestionBase {
+  type: "match";
+  pairs: [string, string][];
+}
+/** Open response — graded on keywords if given, else self-checked. */
+export interface ShortQuestion extends QuestionBase {
+  type: "short";
+  sample: string;
+  keywords?: string[];
+}
+/** Tap the right word among `words`. */
+export interface TapQuestion extends QuestionBase {
+  type: "tap";
+  words: string[];
+  correct: number;
+}
+export type StoryQuestion =
+  | McqQuestion
+  | MultiQuestion
+  | TrueFalseQuestion
+  | ClozeQuestion
+  | SequenceQuestion
+  | MatchQuestion
+  | ShortQuestion
+  | TapQuestion;
 
 export interface RubricRow {
   name: string;
@@ -53,7 +113,7 @@ export interface Story {
   read: {
     label: string;
     passage: PassageSegment[];
-    question: { q: string; opts: ReadOption[] };
+    questions: StoryQuestion[];
   };
   speak: { prompt: string; hints: string[]; feedback: SpeakFeedback };
   write: {
@@ -105,13 +165,72 @@ const STORIES: Story[] = [
         { vocab: "atmosphere", def: "The layer of gases around a planet" },
         { t: " filters had only six hours of life left. Riya took a slow breath. Panicking would not help." },
       ],
-      question: {
-        q: "Why did Riya stop trying to call Mission Control?", opts: [
-          { t: "She gave up.", correct: false },
-          { t: "Only static answered — no one heard her.", correct: true },
-          { t: "Her radio was switched off.", correct: false },
-        ],
-      },
+      questions: [
+        {
+          id: "astro-q1", type: "mcq",
+          prompt: "Why did Riya stop trying to call Mission Control?",
+          options: ["She gave up.", "Only static answered — no one heard her.", "Her radio was switched off."],
+          correct: 1,
+          explain: "The text says “Only static answered” — her calls were not getting through.",
+        },
+        {
+          id: "astro-q2", type: "truefalse",
+          prompt: "Riya panicked and gave up once she realised she was stranded.",
+          answer: false,
+          explain: "She took a slow breath and reminded herself that panicking would not help.",
+        },
+        {
+          id: "astro-q3", type: "multi",
+          prompt: "Which problems is Riya facing right now? (Select all that apply.)",
+          options: ["Her propulsion system is offline", "Her air filters have only hours left", "She has plenty of spare fuel", "Her radio gets only static"],
+          correct: [0, 1, 3],
+          explain: "Propulsion is offline, the filters have ~6 hours, and the radio only gives static. She does not have spare fuel.",
+        },
+        {
+          id: "astro-q4", type: "cloze",
+          prompt: "Complete the sentence with the best word.",
+          text: "Riya's ship had been ___ in this orbit for sixteen hours.",
+          options: ["stranded", "navigate", "propulsion", "atmosphere"],
+          correct: 0,
+          explain: "“Stranded” means left behind, unable to leave — exactly Riya's situation.",
+        },
+        {
+          id: "astro-q5", type: "sequence",
+          prompt: "Put these moments in the order they happened.",
+          items: [
+            "Riya checks her oxygen gauge for the third time.",
+            "She calls “Mission Control, do you copy?”",
+            "Only static answers her.",
+            "She takes a slow breath and stays calm.",
+          ],
+          explain: "She checks oxygen, calls control, hears static, then steadies herself.",
+        },
+        {
+          id: "astro-q6", type: "match",
+          prompt: "Match each word from the chapter to its meaning.",
+          pairs: [
+            ["stranded", "Left behind, unable to leave"],
+            ["navigate", "To find your way through a place"],
+            ["propulsion", "The force that pushes something forward"],
+            ["atmosphere", "The layer of gases around a planet"],
+          ],
+          explain: "These four words all appear in the passage.",
+        },
+        {
+          id: "astro-q7", type: "tap",
+          prompt: "Tap the word that means “to find your way through a place.”",
+          words: ["stranded", "navigate", "propulsion", "drift"],
+          correct: 1,
+          explain: "To navigate is to find your way — Riya could not navigate back to her course.",
+        },
+        {
+          id: "astro-q8", type: "short",
+          prompt: "In a sentence or two: if you were Riya, what would you try first, and why?",
+          sample: "I would slow my breathing to save oxygen, then try to turn the antenna into a signal mirror to flash sunlight toward another station.",
+          keywords: ["oxygen", "breath", "calm", "signal", "antenna", "plan", "air"],
+          explain: "Strong answers stay calm, protect the limited air, and look for a creative way to signal for help.",
+        },
+      ],
     },
     speak: {
       prompt: "You have six hours of air left and no working radio. Speak out loud — what is your plan?",
@@ -176,13 +295,40 @@ const STORIES: Story[] = [
         { vocab: "courageous", def: "Brave when facing something frightening" },
         { t: ", but his hands would not stop shaking." },
       ],
-      question: {
-        q: "Why did some families begin to load their carts?", opts: [
-          { t: "They were going to market.", correct: false },
-          { t: "They were frightened and wanted to flee the city.", correct: true },
-          { t: "It was a festival day.", correct: false },
-        ],
-      },
+      questions: [
+        {
+          id: "rome-q1", type: "mcq",
+          prompt: "Why did some families begin to load their carts?",
+          options: ["They were going to market.", "They were frightened and wanted to flee the city.", "It was a festival day."],
+          correct: 1,
+          explain: "The smoke frightened them, so they prepared to flee Pompeii.",
+        },
+        {
+          id: "rome-q2", type: "truefalse",
+          prompt: "Marcus felt completely calm about the smoking mountain.",
+          answer: false,
+          explain: "He wanted to be courageous, but his hands would not stop shaking.",
+        },
+        {
+          id: "rome-q3", type: "cloze",
+          prompt: "Fill in the blank from the passage.",
+          text: "Marcus's teacher called the smoke an ___.",
+          options: ["omen", "sulphur", "festival", "harvest"],
+          correct: 0,
+          explain: "An omen is a sign that something is about to happen.",
+        },
+        {
+          id: "rome-q4", type: "sequence",
+          prompt: "Put the events of Marcus's morning in order.",
+          items: [
+            "Marcus wakes to the smell of bread and cart wheels.",
+            "His mother points at the smoke rising from the mountain.",
+            "By midday the streets fill with nervous talk.",
+            "Some families load their carts to flee the city.",
+          ],
+          explain: "The morning moves from ordinary, to the first warning sign, to growing fear.",
+        },
+      ],
     },
     speak: {
       prompt: "You are Marcus. The mountain is smoking and people are arguing about whether to leave. Speak out loud — what do you tell your family?",
@@ -247,13 +393,33 @@ const STORIES: Story[] = [
         { vocab: "ritual", def: "Something done the same way each time, with meaning" },
         { t: " of greetings, warnings, and songs to mark territory." },
       ],
-      question: {
-        q: "What did Lena realise the dawn chorus actually was?", opts: [
-          { t: "Random, meaningless noise.", correct: false },
-          { t: "A careful ritual of greetings, warnings and territory songs.", correct: true },
-          { t: "Only baby birds practising.", correct: false },
-        ],
-      },
+      questions: [
+        {
+          id: "birds-q1", type: "mcq",
+          prompt: "What did Lena realise the dawn chorus actually was?",
+          options: ["Random, meaningless noise.", "A careful ritual of greetings, warnings and territory songs.", "Only baby birds practising."],
+          correct: 1,
+          explain: "She found the chorus was a structured ritual, not random noise.",
+        },
+        {
+          id: "birds-q2", type: "multi",
+          prompt: "Which of these are true about bird song? (Select all that apply.)",
+          options: ["It comes from an organ called the syrinx", "A bird can sing two notes at once", "Every bird species shares one identical song", "Young birds learn by mimicking adults"],
+          correct: [0, 1, 3],
+          explain: "Each species has its own dialect, so they do NOT share one identical song.",
+        },
+        {
+          id: "birds-q3", type: "match",
+          prompt: "Match each word to its meaning.",
+          pairs: [
+            ["syrinx", "The voice organ deep in a bird's chest"],
+            ["dialect", "A local version of a language or song"],
+            ["mimic", "To copy a sound or action closely"],
+            ["ritual", "Something done the same way each time, with meaning"],
+          ],
+          explain: "All four words appear in the passage about how birds sing.",
+        },
+      ],
     },
     speak: {
       prompt: "You are Dr. Lena recording the dawn chorus. Speak out loud — describe what you hear and what you think it means.",
@@ -318,13 +484,28 @@ const STORIES: Story[] = [
         { vocab: "overwhelm", def: "To become too strong to control" },
         { t: " my fear. The clock now read 11:57." },
       ],
-      question: {
-        q: "Why does the narrator call the letter a paradox?", opts: [
-          { t: "It is written in a strange language.", correct: false },
-          { t: "They seem to have written it before they were even born.", correct: true },
-          { t: "It has no stamp.", correct: false },
-        ],
-      },
+      questions: [
+        {
+          id: "time-q1", type: "mcq",
+          prompt: "Why does the narrator call the letter a paradox?",
+          options: ["It is written in a strange language.", "They seem to have written it before they were even born.", "It has no stamp."],
+          correct: 1,
+          explain: "A paradox contradicts itself — they could not have written a letter before they existed.",
+        },
+        {
+          id: "time-q2", type: "truefalse",
+          prompt: "The handwriting on the envelope belonged to the narrator.",
+          answer: true,
+          explain: "“The handwriting on the front was unmistakable — it was mine.”",
+        },
+        {
+          id: "time-q3", type: "short",
+          prompt: "What do you think is behind the blue door, and why shouldn't it be opened before noon?",
+          sample: "I think the door leads to the past — to 1923 — and opening it early could trap the narrator in a time they cannot return from.",
+          keywords: ["time", "past", "future", "door", "noon", "danger", "warning"],
+          explain: "There's no single right answer — strong responses use clues from the letter and the clock to make a sensible guess.",
+        },
+      ],
     },
     speak: {
       prompt: "You found a letter in your own handwriting from 1923, warning you not to open the blue door. Speak out loud — what do you decide, and why?",
@@ -389,13 +570,30 @@ const STORIES: Story[] = [
         { vocab: "documented", def: "Recorded with notes, photos or film" },
         { t: " before. Sara reached for the camera with a shaking hand." },
       ],
-      question: {
-        q: "Why is every deep-sea dive so exciting for scientists?", opts: [
-          { t: "The water is warmer down there.", correct: false },
-          { t: "Each dive can reveal a creature never documented before.", correct: true },
-          { t: "It is an easy place to explore.", correct: false },
-        ],
-      },
+      questions: [
+        {
+          id: "ocean-q1", type: "mcq",
+          prompt: "Why is every deep-sea dive so exciting for scientists?",
+          options: ["The water is warmer down there.", "Each dive can reveal a creature never documented before.", "It is an easy place to explore."],
+          correct: 1,
+          explain: "The deep sea is a frontier — new, undocumented creatures can appear on any dive.",
+        },
+        {
+          id: "ocean-q2", type: "cloze",
+          prompt: "Fill in the blank with the word from the passage.",
+          text: "Many deep-sea creatures make their own light, a trick called ___.",
+          options: ["bioluminescence", "transparent", "frontier", "pressure"],
+          correct: 0,
+          explain: "Bioluminescence is light made by a living thing.",
+        },
+        {
+          id: "ocean-q3", type: "tap",
+          prompt: "Tap the word that means “see-through.”",
+          words: ["pressure", "transparent", "frontier", "documented"],
+          correct: 1,
+          explain: "Transparent means see-through — like the jelly that pulsed past Sara's window.",
+        },
+      ],
     },
     speak: {
       prompt: "You are pilot Sara, a kilometre underwater, seeing a glowing creature for the first time. Speak out loud — describe it to your team above.",
@@ -460,13 +658,33 @@ const STORIES: Story[] = [
         { vocab: "evacuate", def: "To leave a dangerous place for safety" },
         { t: ". Every minute of warning could save a life." },
       ],
-      question: {
-        q: "What is the real purpose of Priya's dangerous work?", opts: [
-          { t: "To take exciting photos.", correct: false },
-          { t: "To gather data and give people enough warning to evacuate.", correct: true },
-          { t: "To win a race against other chasers.", correct: false },
-        ],
-      },
+      questions: [
+        {
+          id: "storm-q1", type: "mcq",
+          prompt: "What is the real purpose of Priya's dangerous work?",
+          options: ["To take exciting photos.", "To gather data and give people enough warning to evacuate.", "To win a race against other chasers."],
+          correct: 1,
+          explain: "Her goal is safety — collecting data so towns get enough warning to evacuate.",
+        },
+        {
+          id: "storm-q2", type: "sequence",
+          prompt: "Put the signs and steps of the chase in order.",
+          items: [
+            "The western sky turns an eerie green.",
+            "The radio warns of a rotating storm ahead.",
+            "Priya's instruments show the air pressure dropping.",
+            "She sends a warning so the towns can evacuate.",
+          ],
+          explain: "She reads the sky, gets the alert, confirms with instruments, then warns people.",
+        },
+        {
+          id: "storm-q3", type: "short",
+          prompt: "Why is Priya's work important even though it is so dangerous?",
+          sample: "Her data and early warnings give families enough time to reach shelter, so her risk can save many lives.",
+          keywords: ["warning", "safe", "safety", "evacuate", "data", "lives", "time", "shelter"],
+          explain: "Strong answers connect the danger she takes on to the lives her warnings protect.",
+        },
+      ],
     },
     speak: {
       prompt: "You are Priya, watching a storm form on the horizon. Speak out loud — what do you see, and what will you do to keep people safe?",

@@ -276,16 +276,6 @@
 .class-main.cw-2col {
   grid-template-columns: 230px 1fr;
 }
-.ws-answer-note {
-  margin-top: 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-2);
-  background: var(--cream-2);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 9px 12px;
-}
 .cw-waiting {
   display: flex;
   flex-direction: column;

@@ -26,7 +26,7 @@ export default function LessonCanvas({
   onAnswer,
   kidName,
   coachName,
-  answerNote,
+  reveal,
 }: {
   story: Story;
   storyKey: StoryKey;
@@ -38,7 +38,7 @@ export default function LessonCanvas({
   onAnswer?: (e: Emit) => void;
   kidName: string;
   coachName: string;
-  answerNote?: string | null;
+  reveal?: AnswerPayload["choice"] | null;
 }) {
   const [vocab, setVocab] = useState<{ word: string; def: string } | null>(null);
 
@@ -107,7 +107,7 @@ export default function LessonCanvas({
           isDriver={isDriver}
           onVocab={(word, def) => setVocab({ word, def })}
           onAnswer={onAnswer}
-          answerNote={answerNote}
+          reveal={reveal}
         />
       </div>
 

@@ -104,10 +104,10 @@ export default function Home() {
             </div>
             <div className="st-name">{sk.name}</div>
             <div className="st-lvl">
-              Level {sk.level} <span>of 15</span>
+              Level {sk.level} <span>of {D.PROGRESS.levelsPerSkill}</span>
             </div>
             <div className="bar" style={{ marginTop: 10 }}>
-              <i style={{ width: `${(sk.level / 15) * 100}%`, background: sk.color }} />
+              <i style={{ width: `${(sk.level / D.PROGRESS.levelsPerSkill) * 100}%`, background: sk.color }} />
             </div>
           </button>
         ))}

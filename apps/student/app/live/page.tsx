@@ -88,11 +88,17 @@ export default function StudentLivePage() {
           driver={session.driver}
           coachName={coachName}
           kidName={user.full_name}
-          zoomLink={zoomLink}
           onNext={() => go(idx + 1)}
           onPrev={() => go(idx - 1)}
           onAnswer={onAnswer}
           onLeave={() => router.push("/")}
+          headerActions={
+            zoomLink ? (
+              <a className="ct-zoom" href={zoomLink} target="_blank" rel="noreferrer" title="Open your Zoom video call">
+                🎥 Zoom link
+              </a>
+            ) : undefined
+          }
         />
       );
     }

@@ -36,12 +36,6 @@ export default function TopBar({
             🎥
           </a>
         ) : null}
-        <button className="ct-icon" title="Mic">
-          🎙️
-        </button>
-        <button className="ct-icon" title="Camera">
-          📹
-        </button>
         <button className="ct-end" onClick={onLeave}>
           Leave
         </button>

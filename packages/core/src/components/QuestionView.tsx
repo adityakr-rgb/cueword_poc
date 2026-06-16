@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { QTYPE_LABEL } from "../lib/lesson";
+import { QTYPE_LABEL, resolveReveal } from "../lib/lesson";
 import type { AnswerPayload, Question } from "../lib/types";
 
 type Emit = {
@@ -22,16 +22,22 @@ export default function QuestionView({
   q,
   interactive = true,
   onAnswer,
+  reveal,
 }: {
   q: Question;
   interactive?: boolean;
   onAnswer?: (e: Emit) => void;
+  reveal?: AnswerPayload["choice"] | null;
 }) {
   const [picked, setPicked] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const [multiSel, setMultiSel] = useState<number[]>([]);
   const [rowPick, setRowPick] = useState<Record<number, number>>({});
   const [hintOpen, setHintOpen] = useState(false);
+
+  // Mirror a peer's synced answer (e.g. the child's pick on the coach screen)
+  // when there is no local interaction. Student behavior is unchanged.
+  const eff = resolveReveal({ picked, answered, multiSel }, reveal);
 
   const hintText = q.hint ?? ("look" in q ? q.look : undefined);
   const instr = QTYPE_LABEL[q.type];
@@ -40,9 +46,9 @@ export default function QuestionView({
   function singleChoice(opts: string[], correctIdx: number) {
     return opts.map((o, i) => {
       const classes = ["ge-opt"];
-      if (answered) {
+      if (eff.answered) {
         if (i === correctIdx) classes.push("ge-opt-right");
-        if (i === picked) {
+        if (i === eff.picked) {
           classes.push("ge-opt-picked");
           classes.push(i === correctIdx ? "ge-opt-right" : "ge-opt-wrong");
         }
@@ -87,7 +93,7 @@ export default function QuestionView({
     body = (
       <div className="ge-opts">
         {q.opts.map((o, i) => {
-          const on = multiSel.includes(i);
+          const on = eff.multiSel.includes(i);
           const isCorrect = q.correct.includes(i);
           const classes = ["ge-opt", "ge-opt-multi"];
           if (on) {
@@ -119,16 +125,16 @@ export default function QuestionView({
   } else if (q.type === "cloze") {
     const [before, after] = q.text.split("___");
     const blankClasses = ["ge-cloze-blank"];
-    if (answered) {
+    if (eff.answered) {
       blankClasses.push("filled");
-      blankClasses.push(picked === q.correct ? "blank-right" : "blank-wrong");
+      blankClasses.push(eff.picked === q.correct ? "blank-right" : "blank-wrong");
     }
     body = (
       <>
         <div className="ge-cloze-sentence">
           {before}
           <span className={blankClasses.join(" ")}>
-            {answered && picked !== null ? q.opts[picked] : "____"}
+            {eff.answered && eff.picked !== null ? q.opts[eff.picked] : "____"}
           </span>
           {after}
         </div>

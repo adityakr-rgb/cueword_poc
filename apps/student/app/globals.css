@@ -273,18 +273,17 @@
 }
 
 /* ---- Live shell tweaks ---------------------------------------------------- */
-.class-main.cw-2col {
-  grid-template-columns: 230px 1fr;
+/* The student app sets html{zoom:.9} (see student-design.css), but the shared
+   live shell is sized in raw 100vh — so it fills only 90% of the screen and
+   leaves a white gap at the bottom. Compensate the same way .app/.sidebar do. */
+body.class-body {
+  height: calc(100vh / 0.9);
 }
-.ws-answer-note {
-  margin-top: 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-2);
-  background: var(--cream-2);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 9px 12px;
+body.class-body .class-shell {
+  height: 100%;
+}
+.class-main.cw-2col {
+  grid-template-columns: 340px 1fr;
 }
 .cw-waiting {
   display: flex;
