@@ -3,6 +3,7 @@ import { Fragment, useState } from "react";
 import { SceneBig, SceneStrip } from "./Scene";
 import QuestionView from "./QuestionView";
 import VocabGame from "./VocabGame";
+import SpeakRecorder from "./SpeakRecorder";
 import { sentenceFrames, stepPhase } from "../lib/lesson";
 import type { AnswerPayload, Question, Step, Story, StoryKey } from "../lib/types";
 
@@ -165,9 +166,7 @@ function ActivityPane({
             </span>
           ))}
         </div>
-        <div className="ge-mic">
-          <span className="ge-mic-icon">🎙️</span> Tap to record
-        </div>
+        <SpeakRecorder />
       </>
     );
   }

@@ -3102,6 +3102,19 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   border-radius: 10px; padding: 10px 16px;
 }
 .ge-mic-icon { font-size: 16px; }
+.ge-mic-rec {
+  color: var(--coral-deep); background: #fff;
+  border: 1px solid var(--coral);
+}
+.ge-mic-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--coral-deep);
+  animation: ge-mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes ge-mic-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.ge-mic-result { margin-top: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.ge-mic-result .ge-mic { margin-top: 0; }
+.ge-mic-audio { width: 280px; max-width: 100%; height: 38px; }
+.ge-mic-err { font-size: 12px; line-height: 1.4; color: var(--coral-deep); max-width: 320px; }
 
 /* Write */
 .ge-write-sample {
