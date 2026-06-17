@@ -8,7 +8,7 @@ import { useStoryContent } from "@cueword/core/components/useStoryContent";
 import { isSupabaseConfigured } from "@cueword/core/lib/supabase/client";
 import { useCurrentUser } from "@cueword/core/lib/auth";
 import { POC, getZoomLink } from "@cueword/core/lib/config";
-import { logAnswer, openStory, setStep, toRenderState } from "@cueword/core/lib/session";
+import { logAnswer, openStory, setDriver, setStep, toRenderState } from "@cueword/core/lib/session";
 import { buildSteps, stepPhase } from "@cueword/core/lib/lesson";
 import type { AnswerPayload, Question, StoryKey } from "@cueword/core/lib/types";
 
@@ -23,6 +23,7 @@ export default function StudentLivePage() {
   const { user, ready } = useCurrentUser();
   const { session, setSession, loading } = useActiveSession();
   const openedRef = useRef(false);
+  const claimedRef = useRef(false);
 
   useEffect(() => {
     if (ready && (!user || user.role !== "student")) router.replace("/login");
@@ -51,6 +52,20 @@ export default function StudentLivePage() {
       driver: "student",
     });
     void openStory(session.id, AUTO_STORY, null, "student");
+  }, [session, isLive, setSession]);
+
+  // The student is the default driver of the shared screen. When joining a class
+  // that's ALREADY live (so the auto-open above doesn't run), reclaim the driver
+  // seat if it was left on the coach — otherwise the student lands as a passenger
+  // and can't navigate. Runs once per entry, so the coach's "Take over" still
+  // sticks for the rest of the session.
+  useEffect(() => {
+    if (!session || !isLive || claimedRef.current) return;
+    claimedRef.current = true;
+    if (session.driver !== "student") {
+      setSession({ ...session, driver: "student" });
+      void setDriver(session.id, "student");
+    }
   }, [session, isLive, setSession]);
 
   if (!isSupabaseConfigured) return <SetupNotice />;
