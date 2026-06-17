@@ -19,6 +19,12 @@ function makeSession(over: Partial<ClassSession> = {}): ClassSession {
     current_phase: "Read",
     started_at: null,
     ended_at: null,
+    skill: null,
+    level: null,
+    lesson_title: null,
+    cancelled_at: null,
+    cancel_reason: null,
+    attendance_status: "scheduled",
     created_at: "2026-06-15T00:00:00Z",
     ...over,
   };

@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import SetupNotice from "@cueword/core/components/SetupNotice";
 import LiveClass from "@cueword/core/components/LiveClass";
 import { useActiveSession } from "@cueword/core/components/useActiveSession";
+import { useStoryContent } from "@cueword/core/components/useStoryContent";
 import { isSupabaseConfigured } from "@cueword/core/lib/supabase/client";
 import { useCurrentUser } from "@cueword/core/lib/auth";
 import { POC, getZoomLink } from "@cueword/core/lib/config";
 import { logAnswer, openStory, setStep, toRenderState } from "@cueword/core/lib/session";
-import { getStory } from "@cueword/core/lib/stories";
 import { buildSteps, stepPhase } from "@cueword/core/lib/lesson";
 import type { AnswerPayload, Question, StoryKey } from "@cueword/core/lib/types";
 
@@ -31,6 +31,9 @@ export default function StudentLivePage() {
   const render = useMemo(() => (session ? toRenderState(session) : null), [session]);
   const storyKey = render?.storyKey ?? null;
   const isLive = session?.status === "live" && !!storyKey;
+  // Resolve the synced story_key → full content from the DB (story + MCQs +
+  // everything the coach playbook derives from). Loads on both screens.
+  const { story } = useStoryContent(storyKey);
 
   // Auto-open the configured story the moment we arrive without one, so the
   // student lands directly in the live lesson (Zoom already opened from the
@@ -59,7 +62,6 @@ export default function StudentLivePage() {
 
   // ---- Live lesson (the only view — no picker) ----------------------------
   if (isLive && session && storyKey) {
-    const story = getStory(storyKey);
     if (story) {
       const steps = buildSteps(story);
       const idx = render!.stepIndex;
@@ -92,9 +94,16 @@ export default function StudentLivePage() {
           onPrev={() => go(idx - 1)}
           onAnswer={onAnswer}
           onLeave={() => router.push("/")}
+          floatingPip
           headerActions={
             zoomLink ? (
-              <a className="ct-zoom" href={zoomLink} target="_blank" rel="noreferrer" title="Open your Zoom video call">
+              <a
+                className="ct-zoom"
+                href={zoomLink}
+                target="_blank"
+                rel="noreferrer"
+                title="Open your Zoom video call"
+              >
                 🎥 Zoom link
               </a>
             ) : undefined

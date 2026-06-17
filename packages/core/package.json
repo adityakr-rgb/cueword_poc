@@ -10,6 +10,7 @@
     "./config": "./src/config/poc.config.json"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.1"
   },
   "peerDependencies": {

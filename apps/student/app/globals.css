@@ -282,8 +282,62 @@ body.class-body {
 body.class-body .class-shell {
   height: 100%;
 }
-.class-main.cw-2col {
-  grid-template-columns: 340px 1fr;
+/* The student live view drops the sidebar entirely: the lesson canvas fills the
+   full width and the Zoom video lives in a small floating drop-zone pinned to
+   the bottom-right corner (see .zoom-pip below). */
+.class-main.cw-1col {
+  grid-template-columns: 1fr;
+}
+/* Reserve clearance at the bottom of the canvas so the lesson nav (Back / Next)
+   settles above the floating Zoom PiP instead of hiding behind it. */
+.class-main.cw-1col > .class-canvas {
+  padding-bottom: 232px;
+}
+
+/* Floating Zoom drop-zone — the student drags their 1:1 Zoom window over this. */
+.zoom-pip {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 50;
+  width: 300px;
+  height: 188px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 18px;
+  border-radius: 16px;
+  border: 2px dashed rgba(255, 255, 255, 0.22);
+  background: linear-gradient(160deg, rgba(28, 40, 64, 0.94), rgba(20, 29, 48, 0.94));
+  color: #e8edf6;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42);
+  pointer-events: none;
+}
+.zoom-pip-icon {
+  font-size: 34px;
+  line-height: 1;
+  opacity: 0.9;
+}
+.zoom-pip-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.zoom-pip-sub {
+  font-size: 11px;
+  line-height: 1.5;
+  opacity: 0.6;
+  max-width: 24ch;
+}
+/* The live shell is desktop-only (the class-main is hidden < 940px), so the
+   floating PiP must hide there too. */
+@media (max-width: 940px) {
+  .zoom-pip {
+    display: none;
+  }
 }
 .cw-waiting {
   display: flex;

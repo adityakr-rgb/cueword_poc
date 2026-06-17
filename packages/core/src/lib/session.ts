@@ -5,6 +5,7 @@
 // per-profile lookup or provisioning (admin removed).
 // ============================================================================
 import { getSupabaseBrowser } from "./supabase/client";
+import { getStory as getBundledStory } from "./stories";
 import type {
   AnswerPayload,
   ClassSession,
@@ -12,6 +13,7 @@ import type {
   RenderState,
   Role,
   SessionEvent,
+  Story,
   StoryKey,
 } from "./types";
 
@@ -33,6 +35,30 @@ export async function getSession(id: string): Promise<ClassSession | null> {
   const { data, error } = await sb.from("class_sessions").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   return (data as ClassSession | null) ?? null;
+}
+
+/**
+ * Fetch a story's full content (the Story shape: transcript, passage, MCQs,
+ * vocab, rubric…) from the DB by key. This is what makes the live class — and
+ * the coach playbook derived from it — DB-backed instead of hardcoded: the
+ * synced row carries only `story_key`, and each app resolves that pointer to
+ * the real content here.
+ *
+ * Falls back to the bundled copy (lib/stories.ts) only if the row has no
+ * `content` yet (e.g. not seeded), so a half-migrated DB degrades gracefully
+ * rather than blanking the class.
+ */
+export async function fetchStoryContent(key: StoryKey): Promise<Story | null> {
+  const sb = getSupabaseBrowser();
+  const { data, error } = await sb.from("stories").select("content").eq("key", key).maybeSingle();
+  if (error) throw error;
+  const dbStory = (data?.content as Story | null) ?? null;
+  if (dbStory) return dbStory;
+  console.warn(
+    `[cueword] stories.content is empty for "${key}" — using bundled fallback. ` +
+      `Seed it with: npm run seed:content`,
+  );
+  return getBundledStory(key);
 }
 
 // ---- Realtime subscriptions (the sync wire) -------------------------------

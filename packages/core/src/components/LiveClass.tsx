@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import BodyClass from "./BodyClass";
 import TopBar from "./TopBar";
 import ClassPeople from "./ClassPeople";
+import ZoomPip from "./ZoomPip";
 import LessonCanvas from "./LessonCanvas";
 import CoachPlaybook from "./CoachPlaybook";
 import { buildSteps, stepPhase } from "../lib/lesson";
@@ -31,6 +32,7 @@ export default function LiveClass({
   onAnswer,
   onLeave,
   showPlaybook = false,
+  floatingPip = false,
   headerActions,
   reveal,
 }: {
@@ -47,6 +49,9 @@ export default function LiveClass({
   onAnswer?: (e: Emit) => void;
   onLeave?: () => void;
   showPlaybook?: boolean;
+  /** Hide the sidebar and float a small Zoom drop-zone in the bottom-right
+   *  corner instead, letting the lesson canvas fill the full width. */
+  floatingPip?: boolean;
   headerActions?: ReactNode;
   reveal?: AnswerPayload["choice"] | null;
 }) {
@@ -65,8 +70,8 @@ export default function LiveClass({
           onLeave={onLeave}
           actions={headerActions}
         />
-        <div className={`class-main ${showPlaybook ? "" : "cw-2col"}`}>
-          <ClassPeople activePlanKey={planKeyFor(step)} />
+        <div className={`class-main ${showPlaybook ? "" : floatingPip ? "cw-1col" : "cw-2col"}`}>
+          {!floatingPip && <ClassPeople activePlanKey={planKeyFor(step)} />}
           <LessonCanvas
             story={story}
             storyKey={storyKey}
@@ -97,6 +102,7 @@ export default function LiveClass({
             </aside>
           )}
         </div>
+        {floatingPip && <ZoomPip />}
       </div>
     </>
   );

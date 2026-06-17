@@ -15,6 +15,7 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "seed:content": "node --env-file=.env.local packages/core/scripts/seed-story-content.mts",
     "test": "vitest run tests/unit",
     "test:watch": "vitest tests/unit",
     "test:int": "vitest run tests/integration",

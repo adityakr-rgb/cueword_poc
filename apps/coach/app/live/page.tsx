@@ -7,6 +7,7 @@ import BodyClass from "@cueword/core/components/BodyClass";
 import TopBar from "@cueword/core/components/TopBar";
 import ClassPeople from "@cueword/core/components/ClassPeople";
 import { useActiveSession } from "@cueword/core/components/useActiveSession";
+import { useStoryContent } from "@cueword/core/components/useStoryContent";
 import { isSupabaseConfigured } from "@cueword/core/lib/supabase/client";
 import { logout, useCurrentUser } from "@cueword/core/lib/auth";
 import { POC, getZoomLink } from "@cueword/core/lib/config";
@@ -18,7 +19,6 @@ import {
   subscribeSessionEvents,
   toRenderState,
 } from "@cueword/core/lib/session";
-import { getStory } from "@cueword/core/lib/stories";
 import { buildSteps, stepPhase } from "@cueword/core/lib/lesson";
 import type { AnswerPayload } from "@cueword/core/lib/types";
 
@@ -55,6 +55,12 @@ export default function CoachLivePage() {
     });
   }, [session?.id]);
 
+  // Resolve the synced story_key → full story content from the DB. Runs before
+  // the early returns below (stable hook order), so it lives up here.
+  const render = session ? toRenderState(session) : null;
+  const storyKey = render?.storyKey ?? null;
+  const { story } = useStoryContent(storyKey);
+
   const studentName = POC.student.displayName;
 
   if (!isSupabaseConfigured) return <SetupNotice />;
@@ -62,8 +68,6 @@ export default function CoachLivePage() {
   if (!user || user.role !== "coach") return null; // redirecting to /login
 
   const coachName = user.full_name;
-  const render = session ? toRenderState(session) : null;
-  const storyKey = render?.storyKey ?? null;
   const isLiveWithStory = session?.status === "live" && !!storyKey;
   const zoomLink = getZoomLink(); // JSON config is the single source of truth for the link
 
@@ -81,7 +85,6 @@ export default function CoachLivePage() {
 
   // ---- Live console -------------------------------------------------------
   if (isLiveWithStory && session && storyKey) {
-    const story = getStory(storyKey);
     if (story) {
       const steps = buildSteps(story);
       const idx = render!.stepIndex;
@@ -192,7 +195,9 @@ export default function CoachLivePage() {
       <div className="cw-today-head">
         <div>
           <div className="cw-today-hi">Live class</div>
-          <div className="cw-today-sub">Start the session, then guide {studentName} through the story.</div>
+          <div className="cw-today-sub">
+            Start the session, then guide {studentName} through the story.
+          </div>
         </div>
         <div className="cw-today-actions">
           <button className="cw-logout" onClick={() => router.push("/")}>
