@@ -126,7 +126,8 @@ function StoryCard({ le }: { le: CurriculumLesson }) {
   const pct = done ? 100 : inProgress ? 40 : 0;
 
   const open = () => {
-    if (!locked) router.push(`/story/${story.id}`);
+    // A finished story replays in review mode, so the answers are shown.
+    if (!locked) router.push(`/story/${story.id}${done ? "?review=1" : ""}`);
   };
 
   return (

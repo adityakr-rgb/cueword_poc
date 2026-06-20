@@ -1,8 +1,9 @@
 "use client";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import BodyClass from "./BodyClass";
 import TopBar from "./TopBar";
 import ClassPeople from "./ClassPeople";
+import ClassPlan from "./ClassPlan";
 import ZoomPip from "./ZoomPip";
 import LessonCanvas from "./LessonCanvas";
 import CoachPlaybook from "./CoachPlaybook";
@@ -32,7 +33,7 @@ export default function LiveClass({
   onAnswer,
   onLeave,
   showPlaybook = false,
-  floatingPip = false,
+  rightRail = false,
   headerActions,
   reveal,
 }: {
@@ -49,15 +50,24 @@ export default function LiveClass({
   onAnswer?: (e: Emit) => void;
   onLeave?: () => void;
   showPlaybook?: boolean;
-  /** Hide the sidebar and float a small Zoom drop-zone in the bottom-right
-   *  corner instead, letting the lesson canvas fill the full width. */
-  floatingPip?: boolean;
+  /** Student layout: a right rail (class plan + progress) with the Zoom
+   *  drop-zone docked at its bottom, sharing one width so they line up. The
+   *  lesson canvas fills the remaining width and the left column is dropped. */
+  rightRail?: boolean;
   headerActions?: ReactNode;
   reveal?: AnswerPayload["choice"] | null;
 }) {
   const steps = buildSteps(story);
   const idx = Math.min(Math.max(stepIndex, 0), steps.length - 1);
   const step = steps[idx];
+  const progress = Math.round(((idx + 1) / steps.length) * 100);
+
+  // Layout toggle (student only): "classic" keeps the right rail + top stepper;
+  // "focus" drops the rail, widens the stage, moves Back/Next to side arrows and
+  // the phase stepper to the bottom, with the Zoom PiP floating bottom-right.
+  const [focus, setFocus] = useState(false);
+  const focusLayout = rightRail && focus;
+  const mainClass = showPlaybook ? "" : focusLayout ? "cw-focus" : rightRail ? "cw-rail" : "cw-2col";
 
   return (
     <>
@@ -70,8 +80,8 @@ export default function LiveClass({
           onLeave={onLeave}
           actions={headerActions}
         />
-        <div className={`class-main ${showPlaybook ? "" : floatingPip ? "cw-1col" : "cw-2col"}`}>
-          {!floatingPip && <ClassPeople activePlanKey={planKeyFor(step)} />}
+        <div className={`class-main ${mainClass}`}>
+          {!rightRail && <ClassPeople activePlanKey={planKeyFor(step)} />}
           <LessonCanvas
             story={story}
             storyKey={storyKey}
@@ -84,6 +94,7 @@ export default function LiveClass({
             kidName={kidName}
             coachName={coachName}
             reveal={reveal}
+            focus={focusLayout}
           />
           {showPlaybook && (
             <aside className="class-playbook">
@@ -101,8 +112,38 @@ export default function LiveClass({
               />
             </aside>
           )}
+          {rightRail && !focus && (
+            <aside className="class-rail">
+              <div className="rail-head">
+                <span>📋 Class plan</span>
+                <span className="rail-step">
+                  Step {idx + 1} / {steps.length}
+                </span>
+              </div>
+              <div className="rail-progress">
+                <div style={{ width: `${progress}%` }} />
+              </div>
+              <div className="rail-scroll">
+                <ClassPlan activePlanKey={planKeyFor(step)} />
+              </div>
+              <ZoomPip />
+            </aside>
+          )}
         </div>
-        {floatingPip && <ZoomPip />}
+        {focusLayout && (
+          <div className="zoom-pip-float">
+            <ZoomPip />
+          </div>
+        )}
+        {rightRail && (
+          <button
+            className="class-layout-toggle"
+            onClick={() => setFocus((f) => !f)}
+            title="Switch layout"
+          >
+            {focus ? "▤ Layout 1" : "⛶ Layout 2"}
+          </button>
+        )}
       </div>
     </>
   );

@@ -68,15 +68,14 @@ The term-led story library.
 ## A4. My Workouts (`/(shell)/workouts/page.tsx`)
 Self-paced practice between classes. Three categories, two grading modes:
 - **Auto-scored** (Vocabulary, Reading & Listening Comprehension): runs the **DrillRunner** modal —
-  one MCQ at a time, instant right/wrong marking, a progress bar, and a **wrong answer is "flagged"
-  for the coach** ("saved for your coach to review in class"). Ends on a score ring with a
-  flagged-count note.
+  one MCQ at a time, instant right/wrong marking, and a progress bar (reading drills show the
+  passage alongside the questions). Ends on a score ring.
 - **Coach-reviewed** (Speaking & Writing): runs the **CoachDrill** modal — a textarea (writing) or a
   tap-to-record mic stub (speaking); **Send to coach** moves it to "awaiting", and a later
   "feedback" state shows the coach's note.
 - Per-drill cards track status across the session (`done` w/ score, `awaiting`, `feedback`, `todo`).
-- Headline principle shown in-UI: *"Anything you get wrong is saved for class — a mistake is never
-  a dead end."*
+- _(Removed)_ The earlier "wrong answers are flagged & saved for your coach's review queue" mechanic
+  has been retired — no flagged-count notes, no "saved for class" banner, no home review queue.
 
 ## A5. Schedule (`/(shell)/schedule/page.tsx`)
 Parent-facing weekly calendar.

@@ -142,14 +142,21 @@ function Read({
   onVocab,
   onContinue,
   continueLabel,
+  review,
 }: {
   story: Story;
   onVocab: (v: VocabPopup) => void;
   onContinue: () => void;
   continueLabel: string;
+  review: boolean;
 }) {
   return (
     <div className="story-player-body story-read-body">
+      {review && (
+        <div className="story-review-note">
+          ✓ You&apos;ve finished this story — the answers are shown so you can review them.
+        </div>
+      )}
       <div className="read-passage-label">{story.read.label}</div>
       <p className="read-text">
         {story.read.passage.map((seg, i) =>
@@ -176,7 +183,7 @@ function Read({
             ))}
         </div>
       </div>
-      <StoryQuestions questions={story.read.questions} onContinue={onContinue} continueLabel={continueLabel} />
+      <StoryQuestions questions={story.read.questions} onContinue={onContinue} continueLabel={continueLabel} review={review} />
     </div>
   );
 }
@@ -429,6 +436,12 @@ export default function StoryExperiencePage() {
 
   const [idx, setIdx] = useState(0);
   const [vocab, setVocab] = useState<VocabPopup | null>(null);
+  // Review mode: opened from a completed story in My Stories (?review=1). Read
+  // from the URL on the client to avoid a useSearchParams Suspense boundary.
+  const [review, setReview] = useState(false);
+  useEffect(() => {
+    setReview(new URLSearchParams(window.location.search).get("review") === "1");
+  }, []);
 
   // Login gate (this route renders outside the shell, so it guards itself).
   useEffect(() => {
@@ -500,7 +513,7 @@ export default function StoryExperiencePage() {
           </header>
 
           {stepKey === "listen" && <Listen story={story} />}
-          {stepKey === "read" && <Read story={story} onVocab={setVocab} onContinue={next} continueLabel={FOOT.read.cta} />}
+          {stepKey === "read" && <Read story={story} onVocab={setVocab} onContinue={next} continueLabel={FOOT.read.cta} review={review} />}
           {stepKey === "vocab" && <VocabGame story={story} />}
           {stepKey === "speak" && <Speak story={story} />}
           {stepKey === "write" && <Write story={story} />}

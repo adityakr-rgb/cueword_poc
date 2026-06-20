@@ -282,26 +282,74 @@ body.class-body {
 body.class-body .class-shell {
   height: 100%;
 }
-/* The student live view drops the sidebar entirely: the lesson canvas fills the
-   full width and the Zoom video lives in a small floating drop-zone pinned to
-   the bottom-right corner (see .zoom-pip below). */
-.class-main.cw-1col {
-  grid-template-columns: 1fr;
-}
-/* Reserve clearance at the bottom of the canvas so the lesson nav (Back / Next)
-   settles above the floating Zoom PiP instead of hiding behind it. */
-.class-main.cw-1col > .class-canvas {
-  padding-bottom: 232px;
+/* The student live view drops the left column: the lesson canvas takes the
+   freed width and a right rail carries the class plan + progress, with the Zoom
+   drop-zone docked at the rail's bottom. The rail and the PiP share one width so
+   they line up as a single vertical strip. */
+.class-main.cw-rail {
+  grid-template-columns: 1fr 360px;
 }
 
-/* Floating Zoom drop-zone — the student drags their 1:1 Zoom window over this. */
+/* Right rail — plan on top (scrolls), Zoom drop-zone pinned to the bottom. A
+   flex column so the PiP always sits in the bottom-right corner no matter how
+   long the plan grows. */
+.class-rail {
+  background: #0b1220;
+  color: #e8edf6;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.rail-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.rail-step {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.6;
+}
+.rail-progress {
+  flex: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.rail-progress > div {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.3s ease;
+}
+.rail-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+/* In the rail the plan is the top block, so drop the bottom-pinning margin and
+   divider it carries inside the coach's left column. */
+.class-rail .cp-plan {
+  margin-top: 0;
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Zoom drop-zone — the student drags their 1:1 Zoom window over this. Docked at
+   the bottom of the rail and inset to the same 16px gutters as the plan above,
+   so its width matches the rail. Hidden automatically < 940px since the whole
+   .class-main is hidden there. */
 .zoom-pip {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 50;
-  width: 300px;
-  height: 188px;
+  flex: none;
+  margin: 14px 16px 16px;
+  height: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -332,13 +380,115 @@ body.class-body .class-shell {
   opacity: 0.6;
   max-width: 24ch;
 }
-/* The live shell is desktop-only (the class-main is hidden < 940px), so the
-   floating PiP must hide there too. */
-@media (max-width: 940px) {
-  .zoom-pip {
-    display: none;
-  }
+
+/* ===== Focus layout (toggled) — no rail, side-arrow nav, bottom stepper ===== */
+.class-main.cw-focus {
+  grid-template-columns: 1fr;
 }
+.class-canvas.cc-focus {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 36px;
+}
+/* the stage fills the freed width and sits at the top (not vertically centered,
+   so it never reaches the bottom-right Zoom PiP), flanked by arrows */
+.cc-stage-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+.cc-stage-wrap .ws-stage {
+  flex: 1 1 auto;
+  max-width: 1060px;
+  margin: 0;
+}
+.cc-side-nav {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 10px 26px rgba(8, 14, 28, 0.18);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.cc-side-nav:hover:not(:disabled) {
+  transform: scale(1.08);
+  background: var(--cream);
+}
+.cc-side-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.cc-bottom-bar {
+  margin-top: auto;
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.cc-bottom-bar .class-phases {
+  margin-bottom: 0;
+}
+.cc-bottom-step {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a6688;
+}
+
+/* floating Zoom PiP — focus layout pins it bottom-right over the wide canvas */
+.zoom-pip-float {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 264px;
+  height: 156px;
+  z-index: 45;
+}
+.zoom-pip-float .zoom-pip {
+  margin: 0;
+  height: 100%;
+}
+
+/* floating layout toggle — bottom-left (raised to clear the dev-tools button) */
+.class-layout-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 72px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(17, 24, 39, 0.92);
+  color: #e8edf6;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.class-layout-toggle:hover {
+  background: rgba(31, 41, 55, 0.96);
+}
+
 .cw-waiting {
   display: flex;
   flex-direction: column;

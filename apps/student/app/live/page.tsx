@@ -109,7 +109,7 @@ export default function StudentLivePage() {
           onPrev={() => go(idx - 1)}
           onAnswer={onAnswer}
           onLeave={() => router.push("/")}
-          floatingPip
+          rightRail
           headerActions={
             zoomLink ? (
               <a

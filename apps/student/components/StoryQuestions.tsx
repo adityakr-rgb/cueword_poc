@@ -55,7 +55,15 @@ function sameSet(a: number[], b: number[]): boolean {
 }
 
 /* ---------- shared bits ---------- */
-function Verdict({ ok, explain }: { ok: boolean; explain?: string }) {
+function Verdict({ ok, explain, review }: { ok: boolean; explain?: string; review?: boolean }) {
+  if (review) {
+    return (
+      <div className="sq-verdict review">
+        <span className="sq-verdict-tag">★ Answer</span>
+        {explain && <span className="sq-explain">{explain}</span>}
+      </div>
+    );
+  }
   return (
     <div className={"sq-verdict " + (ok ? "ok" : "no")}>
       <span className="sq-verdict-tag">{ok ? "✓ Nice — that's right." : "✗ Not quite."}</span>
@@ -73,14 +81,14 @@ function CheckButton({ disabled, onClick }: { disabled: boolean; onClick: () => 
   );
 }
 
-type CardProps<Q> = { q: Q; onResult: (ok: boolean) => void };
+type CardProps<Q> = { q: Q; onResult: (ok: boolean) => void; review?: boolean };
 
 /* ---------- single-answer types: auto-reveal on tap ---------- */
-function McqCard({ q, onResult }: CardProps<McqQuestion>) {
+function McqCard({ q, onResult, review }: CardProps<McqQuestion>) {
   const [pick, setPick] = useState<number | null>(null);
-  const checked = pick !== null;
+  const checked = review || pick !== null;
   const choose = (i: number) => {
-    if (pick !== null) return;
+    if (review || pick !== null) return;
     setPick(i);
     onResult(i === q.correct);
   };
@@ -91,7 +99,7 @@ function McqCard({ q, onResult }: CardProps<McqQuestion>) {
           let cls = "sq-opt";
           if (checked) {
             if (i === q.correct) cls += " is-correct";
-            else if (i === pick) cls += " is-wrong";
+            else if (!review && i === pick) cls += " is-wrong";
           }
           return (
             <button key={i} className={cls} disabled={checked} onClick={() => choose(i)}>
@@ -100,16 +108,16 @@ function McqCard({ q, onResult }: CardProps<McqQuestion>) {
           );
         })}
       </div>
-      {checked && <Verdict ok={pick === q.correct} explain={q.explain} />}
+      {checked && <Verdict ok={pick === q.correct} explain={q.explain} review={review} />}
     </>
   );
 }
 
-function TapCard({ q, onResult }: CardProps<TapQuestion>) {
+function TapCard({ q, onResult, review }: CardProps<TapQuestion>) {
   const [pick, setPick] = useState<number | null>(null);
-  const checked = pick !== null;
+  const checked = review || pick !== null;
   const choose = (i: number) => {
-    if (pick !== null) return;
+    if (review || pick !== null) return;
     setPick(i);
     onResult(i === q.correct);
   };
@@ -120,7 +128,7 @@ function TapCard({ q, onResult }: CardProps<TapQuestion>) {
           let cls = "sq-tap-word";
           if (checked) {
             if (i === q.correct) cls += " is-correct";
-            else if (i === pick) cls += " is-wrong";
+            else if (!review && i === pick) cls += " is-wrong";
           }
           return (
             <button key={i} className={cls} disabled={checked} onClick={() => choose(i)}>
@@ -129,16 +137,16 @@ function TapCard({ q, onResult }: CardProps<TapQuestion>) {
           );
         })}
       </div>
-      {checked && <Verdict ok={pick === q.correct} explain={q.explain} />}
+      {checked && <Verdict ok={pick === q.correct} explain={q.explain} review={review} />}
     </>
   );
 }
 
-function TrueFalseCard({ q, onResult }: CardProps<TrueFalseQuestion>) {
+function TrueFalseCard({ q, onResult, review }: CardProps<TrueFalseQuestion>) {
   const [pick, setPick] = useState<boolean | null>(null);
-  const checked = pick !== null;
+  const checked = review || pick !== null;
   const choose = (val: boolean) => {
-    if (pick !== null) return;
+    if (review || pick !== null) return;
     setPick(val);
     onResult(val === q.answer);
   };
@@ -146,7 +154,7 @@ function TrueFalseCard({ q, onResult }: CardProps<TrueFalseQuestion>) {
     let cls = "sq-opt sq-tf";
     if (checked) {
       if (val === q.answer) cls += " is-correct";
-      else if (val === pick) cls += " is-wrong";
+      else if (!review && val === pick) cls += " is-wrong";
     }
     return (
       <button className={cls} disabled={checked} onClick={() => choose(val)}>
@@ -160,29 +168,29 @@ function TrueFalseCard({ q, onResult }: CardProps<TrueFalseQuestion>) {
         {opt(true, "True")}
         {opt(false, "False")}
       </div>
-      {checked && <Verdict ok={pick === q.answer} explain={q.explain} />}
+      {checked && <Verdict ok={pick === q.answer} explain={q.explain} review={review} />}
     </>
   );
 }
 
-function ClozeCard({ q, onResult }: CardProps<ClozeQuestion>) {
+function ClozeCard({ q, onResult, review }: CardProps<ClozeQuestion>) {
   const [pick, setPick] = useState<number | null>(null);
-  const checked = pick !== null;
+  const checked = review || pick !== null;
   const [before, after] = useMemo(() => {
     const idx = q.text.indexOf("___");
     return idx >= 0 ? [q.text.slice(0, idx), q.text.slice(idx + 3)] : [q.text + " ", ""];
   }, [q.text]);
   const choose = (i: number) => {
-    if (pick !== null) return;
+    if (review || pick !== null) return;
     setPick(i);
     onResult(i === q.correct);
   };
-  const blankText = pick !== null ? q.options[pick] : "______";
+  const blankText = review ? q.options[q.correct] : pick !== null ? q.options[pick] : "______";
   return (
     <>
       <p className="sq-cloze-text">
         {before}
-        <span className={"sq-blank" + (checked ? (pick === q.correct ? " is-correct" : " is-wrong") : "")}>{blankText}</span>
+        <span className={"sq-blank" + (checked ? (review || pick === q.correct ? " is-correct" : " is-wrong") : "")}>{blankText}</span>
         {after}
       </p>
       <div className="sq-opts sq-opts-inline">
@@ -190,7 +198,7 @@ function ClozeCard({ q, onResult }: CardProps<ClozeQuestion>) {
           let cls = "sq-opt sq-chip";
           if (checked) {
             if (i === q.correct) cls += " is-correct";
-            else if (i === pick) cls += " is-wrong";
+            else if (!review && i === pick) cls += " is-wrong";
           }
           return (
             <button key={i} className={cls} disabled={checked} onClick={() => choose(i)}>
@@ -199,15 +207,16 @@ function ClozeCard({ q, onResult }: CardProps<ClozeQuestion>) {
           );
         })}
       </div>
-      {checked && <Verdict ok={pick === q.correct} explain={q.explain} />}
+      {checked && <Verdict ok={pick === q.correct} explain={q.explain} review={review} />}
     </>
   );
 }
 
 /* ---------- multi-step types: Check button ---------- */
-function MultiCard({ q, onResult }: CardProps<MultiQuestion>) {
+function MultiCard({ q, onResult, review }: CardProps<MultiQuestion>) {
   const [picks, setPicks] = useState<number[]>([]);
-  const [checked, setChecked] = useState(false);
+  const [checkedState, setChecked] = useState(false);
+  const checked = review || checkedState;
   const ok = sameSet(picks, q.correct);
   const toggle = (i: number) => {
     if (checked) return;
@@ -222,11 +231,11 @@ function MultiCard({ q, onResult }: CardProps<MultiQuestion>) {
           let cls = "sq-opt sq-multi";
           if (checked) {
             if (isCorrect) cls += " is-correct";
-            else if (isPicked) cls += " is-wrong";
+            else if (!review && isPicked) cls += " is-wrong";
           } else if (isPicked) cls += " is-selected";
           return (
             <button key={i} className={cls} disabled={checked} onClick={() => toggle(i)}>
-              <span className="sq-box">{isPicked ? "✓" : ""}</span>
+              <span className="sq-box">{(review ? isCorrect : isPicked) ? "✓" : ""}</span>
               {o}
             </button>
           );
@@ -241,16 +250,19 @@ function MultiCard({ q, onResult }: CardProps<MultiQuestion>) {
           }}
         />
       ) : (
-        <Verdict ok={ok} explain={q.explain} />
+        <Verdict ok={ok} explain={q.explain} review={review} />
       )}
     </>
   );
 }
 
-function SequenceCard({ q, onResult }: CardProps<SequenceQuestion>) {
+function SequenceCard({ q, onResult, review }: CardProps<SequenceQuestion>) {
   const [order, setOrder] = useState<number[]>(() => shuffledOrder(q.items.length));
-  const [checked, setChecked] = useState(false);
+  const [checkedState, setChecked] = useState(false);
+  const checked = review || checkedState;
   const ok = order.every((v, i) => v === i);
+  // In review the correct order is shown directly (0,1,2,…).
+  const display = review ? q.items.map((_, i) => i) : order;
   const move = (pos: number, dir: -1 | 1) => {
     if (checked) return;
     const target = pos + dir;
@@ -264,9 +276,9 @@ function SequenceCard({ q, onResult }: CardProps<SequenceQuestion>) {
   return (
     <>
       <ol className="sq-seq">
-        {order.map((itemIdx, pos) => {
+        {display.map((itemIdx, pos) => {
           let cls = "sq-seq-item";
-          if (checked) cls += itemIdx === pos ? " is-correct" : " is-wrong";
+          if (checked) cls += review || itemIdx === pos ? " is-correct" : " is-wrong";
           return (
             <li key={itemIdx} className={cls}>
               <span className="sq-seq-num">{pos + 1}</span>
@@ -294,16 +306,18 @@ function SequenceCard({ q, onResult }: CardProps<SequenceQuestion>) {
           }}
         />
       ) : (
-        <Verdict ok={ok} explain={q.explain} />
+        <Verdict ok={ok} explain={q.explain} review={review} />
       )}
     </>
   );
 }
 
-function MatchCard({ q, onResult }: CardProps<MatchQuestion>) {
+function MatchCard({ q, onResult, review }: CardProps<MatchQuestion>) {
   const rights = useMemo(() => shuffle(q.pairs.map((p) => p[1])), [q.pairs]);
-  const [assign, setAssign] = useState<(string | "")[]>(() => q.pairs.map(() => ""));
-  const [checked, setChecked] = useState(false);
+  // In review every row is pre-filled with the correct match.
+  const [assign, setAssign] = useState<(string | "")[]>(() => (review ? q.pairs.map((p) => p[1]) : q.pairs.map(() => "")));
+  const [checkedState, setChecked] = useState(false);
+  const checked = review || checkedState;
   const allChosen = assign.every((a) => a !== "");
   const ok = q.pairs.every((p, i) => assign[i] === p[1]);
   return (
@@ -312,7 +326,7 @@ function MatchCard({ q, onResult }: CardProps<MatchQuestion>) {
         {q.pairs.map((p, i) => {
           const rowOk = assign[i] === p[1];
           return (
-            <div key={i} className={"sq-match-row" + (checked ? (rowOk ? " is-correct" : " is-wrong") : "")}>
+            <div key={i} className={"sq-match-row" + (checked ? (review || rowOk ? " is-correct" : " is-wrong") : "")}>
               <span className="sq-match-left">{p[0]}</span>
               <span className="sq-match-arrow">→</span>
               <select
@@ -328,7 +342,7 @@ function MatchCard({ q, onResult }: CardProps<MatchQuestion>) {
                   </option>
                 ))}
               </select>
-              {checked && !rowOk && <span className="sq-match-fix">→ {p[1]}</span>}
+              {checked && !review && !rowOk && <span className="sq-match-fix">→ {p[1]}</span>}
             </div>
           );
         })}
@@ -342,13 +356,13 @@ function MatchCard({ q, onResult }: CardProps<MatchQuestion>) {
           }}
         />
       ) : (
-        <Verdict ok={ok} explain={q.explain} />
+        <Verdict ok={ok} explain={q.explain} review={review} />
       )}
     </>
   );
 }
 
-function ShortCard({ q, onResult }: CardProps<ShortQuestion>) {
+function ShortCard({ q, onResult, review }: CardProps<ShortQuestion>) {
   const [text, setText] = useState("");
   const [checked, setChecked] = useState(false);
   const [selfOk, setSelfOk] = useState<boolean | null>(null);
@@ -358,6 +372,19 @@ function ShortCard({ q, onResult }: CardProps<ShortQuestion>) {
     return q.keywords.filter((k) => lc.includes(k.toLowerCase()));
   }, [text, q.keywords]);
   const autoGraded = !!q.keywords?.length;
+
+  // In review the sample answer is shown straight away.
+  if (review) {
+    return (
+      <div className="sq-short-review">
+        <Verdict ok review explain={q.explain} />
+        <div className="sq-sample">
+          <span className="sq-sample-label">Sample answer</span>
+          <p>{q.sample}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -425,24 +452,24 @@ function ShortCard({ q, onResult }: CardProps<ShortQuestion>) {
 }
 
 /* ---------- dispatcher ---------- */
-function QuestionBody({ q, onResult }: { q: StoryQuestion; onResult: (ok: boolean) => void }) {
+function QuestionBody({ q, onResult, review }: { q: StoryQuestion; onResult: (ok: boolean) => void; review?: boolean }) {
   switch (q.type) {
     case "mcq":
-      return <McqCard q={q} onResult={onResult} />;
+      return <McqCard q={q} onResult={onResult} review={review} />;
     case "multi":
-      return <MultiCard q={q} onResult={onResult} />;
+      return <MultiCard q={q} onResult={onResult} review={review} />;
     case "truefalse":
-      return <TrueFalseCard q={q} onResult={onResult} />;
+      return <TrueFalseCard q={q} onResult={onResult} review={review} />;
     case "cloze":
-      return <ClozeCard q={q} onResult={onResult} />;
+      return <ClozeCard q={q} onResult={onResult} review={review} />;
     case "sequence":
-      return <SequenceCard q={q} onResult={onResult} />;
+      return <SequenceCard q={q} onResult={onResult} review={review} />;
     case "match":
-      return <MatchCard q={q} onResult={onResult} />;
+      return <MatchCard q={q} onResult={onResult} review={review} />;
     case "short":
-      return <ShortCard q={q} onResult={onResult} />;
+      return <ShortCard q={q} onResult={onResult} review={review} />;
     case "tap":
-      return <TapCard q={q} onResult={onResult} />;
+      return <TapCard q={q} onResult={onResult} review={review} />;
     default:
       return null;
   }
@@ -452,10 +479,12 @@ export default function StoryQuestions({
   questions,
   onContinue,
   continueLabel,
+  review,
 }: {
   questions: StoryQuestion[];
   onContinue?: () => void;
   continueLabel?: string;
+  review?: boolean;
 }) {
   const [results, setResults] = useState<Record<string, boolean>>({});
   const [current, setCurrent] = useState(0);
@@ -470,19 +499,27 @@ export default function StoryQuestions({
   const curId = questions[current].id;
   const curAnswered = results[curId] !== undefined;
   const isLast = current >= total - 1;
-  const navHint = !curAnswered ? "Choose your answer" : isLast ? "That's the last question" : "On to the next one";
+  const navHint = review
+    ? isLast
+      ? "That's the last answer"
+      : "See the next answer"
+    : !curAnswered
+      ? "Choose your answer"
+      : isLast
+        ? "That's the last question"
+        : "On to the next one";
 
   return (
     <div className="sq-flip">
       <div className="sq-flip-head">
-        <span className="sq-flip-title">Comprehension check</span>
+        <span className="sq-flip-title">{review ? "Comprehension check · answers" : "Comprehension check"}</span>
         <span className="sq-flip-count">
-          {answered} / {total} answered{answered ? ` · ${correct} correct` : ""}
+          {review ? "Answers shown" : `${answered} / ${total} answered${answered ? ` · ${correct} correct` : ""}`}
         </span>
       </div>
       <div className="sq-rail">
         {questions.map((qq, i) => (
-          <span key={qq.id} className={"sq-seg" + (i === current ? " current" : results[qq.id] !== undefined ? " done" : "")} />
+          <span key={qq.id} className={"sq-seg" + (i === current ? " current" : review || results[qq.id] !== undefined ? " done" : "")} />
         ))}
       </div>
       <div className="sq-step-label">
@@ -494,8 +531,8 @@ export default function StoryQuestions({
       {questions.map((qq, i) => (
         <div key={qq.id} className="sq-q" style={{ display: i === current ? "block" : "none" }}>
           <div className="sq-prompt-box">{qq.prompt}</div>
-          {qq.hint && <div className="sq-hint">💡 {qq.hint}</div>}
-          <QuestionBody q={qq} onResult={(ok) => setResult(qq.id, ok)} />
+          {qq.hint && !review && <div className="sq-hint">💡 {qq.hint}</div>}
+          <QuestionBody q={qq} onResult={(ok) => setResult(qq.id, ok)} review={review} />
         </div>
       ))}
 

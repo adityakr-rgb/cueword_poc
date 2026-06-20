@@ -25,18 +25,18 @@ const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home" },
   { href: "/lessons", label: "My Stories", icon: "books" },
   { href: "/workouts", label: "My Workouts", icon: "target" },
-  { href: "/schedule", label: "Schedule", icon: "calendar" },
+  { href: "/schedule", label: "My Classes", icon: "calendar" },
   { href: "/progress", label: "My Progress", icon: "chart" },
-  { href: "/works", label: "My Portfolio", icon: "folder" },
+  { href: "/works", label: "My Work", icon: "folder" },
 ];
 
 const CRUMB_LABEL: Record<string, string> = {
   "/": "Home",
   "/lessons": "My Stories",
   "/workouts": "My Workouts",
-  "/schedule": "Schedule",
+  "/schedule": "My Classes",
   "/progress": "My Progress",
-  "/works": "My Portfolio",
+  "/works": "My Work",
   "/story": "My Stories",
 };
 
@@ -135,10 +135,6 @@ export default function Shell({ children }: { children: ReactNode }) {
           <div className="crumbs">
             <span className="here">{here}</span>
           </div>
-          <span className="spacer" />
-          <button className="topbar-help">
-            <Ic.message size={17} /> Need help?
-          </button>
         </div>
         {children}
       </main>

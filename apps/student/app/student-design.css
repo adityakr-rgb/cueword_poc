@@ -811,7 +811,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .ncs-dot { width: 10px; height: 10px; border-radius: var(--r-pill); background: var(--line); }
 .ncs-spin { display: inline-flex; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.nc-tip { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin-top: 12px; }
 
 /* ---- Schedule ---- */
 .tz-strip { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
@@ -1022,14 +1021,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
    ============================================================ */
 
 /* ===================== MY WORKOUTS ===================== */
-.wo-intro { display: flex; align-items: center; gap: 16px; background: linear-gradient(110deg, var(--minor-wash), var(--card-warm)); border: 1px solid var(--minor); border-radius: var(--r-lg); padding: 16px 20px; margin-bottom: 26px; box-shadow: var(--sh-sm); }
-.wo-intro-ico { width: 50px; height: 50px; border-radius: var(--r-md); background: var(--bg-1); display: flex; align-items: center; justify-content: center; flex: none; color: var(--minor-deep); }
-.wo-intro-txt { flex: 1; min-width: 0; font-size: 14.5px; line-height: 1.5; color: var(--ink-2); }
-.wo-intro-txt b { color: var(--ink); }
-.wo-intro-pts { flex: none; text-align: center; background: var(--bg-1); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 16px; }
-.wo-intro-pts b { display: block; font-family: var(--font-head); font-weight: 800; font-size: 22px; color: var(--minor-ink); }
-.wo-intro-pts span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); }
-
 .wo-sections { display: flex; flex-direction: column; gap: 28px; }
 .wo-cat { display: flex; flex-direction: column; gap: 14px; }
 .wo-cat-head { display: flex; align-items: center; gap: 13px; }
@@ -1054,10 +1045,18 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
 .wo-cta { display: inline-flex; align-items: center; gap: 6px; color: var(--c); }
 .wo-score { display: inline-flex; align-items: center; gap: 6px; color: var(--good); }
 .wo-await { display: inline-flex; align-items: center; gap: 6px; color: var(--listening); }
-.wo-flagchip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; color: var(--warn); background: var(--gold-wash); padding: 4px 9px; border-radius: var(--r-pill); }
 
 /* drill runner (reuses .modal-scrim) */
-.drill { background: var(--card); border-radius: var(--r-xl); padding: 28px 30px 26px; max-width: 560px; width: 100%; box-shadow: var(--sh-lg); --c: var(--listening); --w: var(--listening-wash); }
+/* Uniform window size for every workout category: 70% of the viewport width,
+   capped height with internal scroll so a reading passage never grows the window. */
+.drill { background: var(--card); border-radius: var(--r-xl); padding: 38px 42px 34px; width: 70vw; max-width: 70vw; flex-shrink: 0; max-height: 88vh; overflow-y: auto; box-shadow: var(--sh-lg); --c: var(--listening); --w: var(--listening-wash); }
+
+/* reading passage shown above the questions */
+.drill-passage { background: var(--w); border: 1px solid color-mix(in srgb, var(--c) 22%, transparent); border-radius: var(--r-md); padding: 16px 18px; margin-bottom: 20px; max-height: 34vh; overflow-y: auto; }
+.drill-passage-label { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--c); margin-bottom: 10px; }
+.drill-passage-body { font-size: 15.5px; line-height: 1.7; color: var(--ink); }
+.drill-passage-body p { margin: 0 0 10px; }
+.drill-passage-body p:last-child { margin-bottom: 0; }
 .drill-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .drill-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--c); }
 .drill-prog { font-weight: 800; font-size: 13px; color: var(--ink-3); }
@@ -1076,7 +1075,26 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
 .drill-feedback { margin-top: 16px; display: flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 700; border-radius: var(--r-md); padding: 11px 14px; }
 .drill-feedback.ok { background: var(--good-wash); color: var(--good); }
 .drill-feedback.flag { background: var(--gold-wash); color: var(--gold-ink); }
-.drill-foot { margin-top: 22px; display: flex; justify-content: flex-end; }
+.drill-foot { margin-top: 22px; display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+
+/* two-pane drill layout — fills the 70vw window: context panel (left) + interaction (right) */
+.drill-grid { display: grid; grid-template-columns: 4fr 5fr; gap: 28px; align-items: stretch; }
+.drill-aside { background: var(--w); border-radius: var(--r-lg); padding: 24px 26px; display: flex; flex-direction: column; gap: 13px; min-width: 0; }
+.drill-aside-ico { width: 48px; height: 48px; border-radius: var(--r-md); background: var(--card); display: flex; align-items: center; justify-content: center; box-shadow: var(--sh-sm); }
+.drill-aside-title { font-family: var(--font-head); font-weight: 800; font-size: 20px; line-height: 1.25; color: var(--ink); }
+.drill-aside-prog { font-weight: 800; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--c); }
+.drill-aside-desc { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); margin: 2px 0 0; }
+.drill-aside .drill-bar { margin: 2px 0 4px; }
+.drill-aside .drill-passage { background: var(--card); border-color: color-mix(in srgb, var(--c) 20%, transparent); max-height: 50vh; margin-bottom: 0; margin-top: 4px; }
+.drill-main { display: flex; flex-direction: column; min-width: 0; }
+.drill-main .drill-q { margin-top: 2px; }
+.drill-main .drill-foot { margin-top: auto; }
+.drill-textarea { width: 100%; flex: 1; min-height: 220px; resize: vertical; }
+.drill-centered { max-width: 540px; margin-inline: auto; }
+@media (max-width: 760px) {
+  .drill-grid { grid-template-columns: 1fr; gap: 18px; }
+  .drill-centered { max-width: none; }
+}
 
 /* drill result */
 .drill-result { text-align: center; padding: 6px 0 0; }
@@ -1086,7 +1104,6 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
 .dr-ring b span { font-size: 11px; font-weight: 700; color: var(--ink-3); margin-top: 3px; text-transform: uppercase; letter-spacing: .05em; }
 .drill-result h3 { font-size: 25px; margin-bottom: 6px; }
 .drill-result p { color: var(--ink-2); font-size: 14.5px; line-height: 1.5; margin: 0 auto 18px; max-width: 36ch; }
-.drill-flagnote { display: inline-flex; align-items: center; gap: 9px; font-size: 13.5px; font-weight: 700; color: var(--gold-ink); background: var(--gold-wash); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: var(--r-md); padding: 11px 16px; margin-bottom: 18px; text-align: left; }
 
 /* coach-review (speaking/writing) modal body */
 .drill-coach { text-align: center; }
@@ -1096,6 +1113,64 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
 .drill-coachnote { background: var(--gold-wash); border: 1px solid var(--gold); border-radius: var(--r-md); padding: 16px 18px; text-align: left; }
 .drill-coachnote .dcn-head { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 800; margin-bottom: 7px; }
 .drill-coachnote p { font-size: 14px; color: var(--ink); margin: 0; max-width: none; }
+
+/* ===================== MY PROGRESS — kid-facing ===================== */
+.cw-kidprog .kp-hero { display: flex; align-items: center; gap: 22px; background: linear-gradient(135deg, var(--gold-wash), var(--card) 72%); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 22px 28px; box-shadow: var(--sh-sm); }
+.cw-kidprog .kp-hero-fox { flex: none; }
+.cw-kidprog .kp-hero-h1 { font-size: 27px; line-height: 1.15; margin: 3px 0 7px; }
+.cw-kidprog .kp-hero-sub { font-size: 15px; color: var(--ink-2); line-height: 1.5; margin: 0; }
+
+.cw-kidprog .kp-section-title { font-family: var(--font-head); font-weight: 800; font-size: 19px; margin: 30px 0 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cw-kidprog .kp-st-hint { font-family: var(--font-body); font-weight: 600; font-size: 13px; color: var(--ink-3); }
+
+/* belt quest */
+.cw-kidprog .kp-belt { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 24px 28px; box-shadow: var(--sh-sm); }
+.cw-kidprog .kp-belt-ring { position: relative; width: 120px; height: 120px; flex: none; }
+.cw-kidprog .kp-belt-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+.cw-kidprog .kp-belt-knot { width: 46px; height: 46px; border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center; box-shadow: var(--sh-sm); }
+.cw-kidprog .kp-belt-name { font-weight: 800; font-size: 14px; }
+.cw-kidprog .kp-belt-h { font-size: 18.5px; font-weight: 700; line-height: 1.4; margin-bottom: 13px; }
+.cw-kidprog .kp-belt-h b { color: var(--belt-c, var(--gold-deep)); }
+.cw-kidprog .kp-belt-bar { height: 13px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+.cw-kidprog .kp-belt-bar > i { display: block; height: 100%; border-radius: var(--r-pill); transition: width .5s ease; }
+.cw-kidprog .kp-belt-pips { display: flex; gap: 8px; margin: 16px 0; }
+.cw-kidprog .kp-pip { width: 18px; height: 18px; border-radius: var(--r-pill); background: var(--line); transition: transform .15s; }
+.cw-kidprog .kp-pip.done { background: var(--bp); }
+.cw-kidprog .kp-pip.now { background: var(--bp); box-shadow: 0 0 0 3px color-mix(in srgb, var(--bp) 35%, transparent); transform: scale(1.18); }
+
+/* story shelf */
+.cw-kidprog .kp-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); gap: 14px; }
+.cw-kidprog .kp-story { display: flex; flex-direction: column; align-items: center; gap: 9px; text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 17px 12px 14px; box-shadow: var(--sh-sm); cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.cw-kidprog .kp-story:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
+.cw-kidprog .kp-story-cover { width: 66px; height: 66px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 34px; box-shadow: var(--sh-sm); }
+.cw-kidprog .kp-story-title { font-weight: 800; font-size: 14px; line-height: 1.25; color: var(--ink); }
+.cw-kidprog .kp-story-cta { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--good); margin-top: auto; }
+
+/* recent coach feedback */
+.cw-kidprog .kp-feedback { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.cw-kidprog .kp-fb { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--sh-sm); }
+.cw-kidprog .kp-fb-head { display: flex; align-items: center; gap: 11px; margin-bottom: 10px; }
+.cw-kidprog .kp-fb-meta { flex: 1; min-width: 0; }
+.cw-kidprog .kp-fb-coach { font-weight: 800; font-size: 14px; color: var(--ink); }
+.cw-kidprog .kp-fb-ctx { display: flex; align-items: center; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+.cw-kidprog .kp-skill-tag { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: var(--r-pill); }
+.cw-kidprog .kp-fb-lesson { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
+.cw-kidprog .kp-fb-date { font-size: 12px; font-weight: 700; color: var(--ink-3); flex: none; }
+.cw-kidprog .kp-fb-text { font-size: 14.5px; line-height: 1.55; color: var(--ink); margin: 0; }
+
+/* stats */
+.cw-kidprog .kp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.cw-kidprog .kp-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 14px; box-shadow: var(--sh-sm); text-align: center; }
+.cw-kidprog .kp-stat-ico { font-size: 26px; }
+.cw-kidprog .kp-stat-big { font-family: var(--font-head); font-weight: 800; font-size: 30px; line-height: 1; color: var(--ink); margin-top: 2px; }
+.cw-kidprog .kp-stat-label { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.cw-kidprog .kp-stat-sub { font-size: 12px; font-weight: 600; color: var(--ink-3); }
+
+@media (max-width: 720px) {
+  .cw-kidprog .kp-hero { flex-direction: column; text-align: center; }
+  .cw-kidprog .kp-belt { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .cw-kidprog .kp-stats { grid-template-columns: 1fr; }
+}
 
 /* ===================== BELT + LEVEL (progress) ===================== */
 .belt-hero { display: grid; grid-template-columns: auto 1fr; gap: 26px; align-items: center; color: #F4EFE3;
@@ -1165,22 +1240,6 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
 .alert-ico.gate { background: var(--writing-wash); color: var(--writing); }
 .alert-ico.milestone { background: var(--gold-wash); color: var(--gold-deep, #D9A938); }
 .alert-text { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.35; }
-
-/* ===================== FLAGGED REVIEW (home) ===================== */
-.flag-strip { margin-top: 24px; background: var(--card); border: 1px solid var(--gold); border-left: 5px solid var(--gold-deep, #D9A938); border-radius: var(--r-lg); padding: 16px 20px; box-shadow: var(--sh-sm); }
-.flag-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.flag-ico { width: 36px; height: 36px; border-radius: var(--r-pill); background: var(--gold-wash); color: var(--gold-deep, #D9A938); display: flex; align-items: center; justify-content: center; flex: none; }
-.flag-htext { flex: 1; min-width: 0; }
-.flag-htext b { font-family: var(--font-head); font-weight: 700; font-size: 16px; }
-.flag-htext span { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-top: 1px; }
-.flag-count { flex: none; font-size: 12.5px; font-weight: 800; background: var(--gold); color: var(--gold-ink); border-radius: var(--r-pill); padding: 5px 12px; }
-.flag-list { display: flex; flex-direction: column; gap: 8px; }
-.flag-item { display: flex; align-items: center; gap: 12px; background: var(--card-warm); border: 1px solid var(--line); border-radius: var(--r-md); padding: 11px 14px; }
-.flag-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
-.flag-imid { flex: 1; min-width: 0; }
-.flag-ititle { font-weight: 700; font-size: 14px; }
-.flag-isub { font-size: 12.5px; font-weight: 600; color: var(--ink-3); }
-.flag-from { font-size: 11.5px; font-weight: 700; color: var(--ink-3); flex: none; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 4px 10px; }
 
 /* ===================== SCHEDULE ===================== */
 .slot-cap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--card-warm); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 16px; margin-bottom: 14px; font-size: 13.5px; font-weight: 700; color: var(--ink-2); }
@@ -1999,7 +2058,14 @@ button.wo-card:hover { transform: translateY(-3px); box-shadow: var(--sh-md); }
 .cw-story .sq-verdict-tag { font-weight: 800; }
 .cw-story .sq-verdict.ok .sq-verdict-tag { color: #2a6a2a; }
 .cw-story .sq-verdict.no .sq-verdict-tag { color: var(--coral-deep); }
+.cw-story .sq-verdict.review { background: color-mix(in srgb, var(--story-c, #4a3b6b) 9%, #fff); border: 1px solid color-mix(in srgb, var(--story-c, #4a3b6b) 32%, transparent); }
+.cw-story .sq-verdict.review .sq-verdict-tag { color: var(--story-c, #4a3b6b); }
 .cw-story .sq-explain { color: var(--ink-2); }
+
+/* review-mode banner on a completed story's Read step */
+.cw-story .story-review-note { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--story-c, #4a3b6b);
+  background: color-mix(in srgb, var(--story-c, #4a3b6b) 10%, #fff); border: 1px solid color-mix(in srgb, var(--story-c, #4a3b6b) 30%, transparent);
+  border-radius: var(--r-md); padding: 11px 15px; margin-bottom: 18px; }
 
 /* flip navigation */
 .cw-story .sq-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; }

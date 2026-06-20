@@ -244,6 +244,8 @@ export interface Drill {
   items: number;
   level: number;
   status: string;
+  /** Reading passage (HTML) shown above the questions for reading-comprehension drills. */
+  passage?: string;
   questions?: DrillQuestion[];
   score?: { correct: number; total: number };
   flagged?: number;
@@ -806,6 +808,7 @@ const WORKOUTS: Workouts = {
       drills: [
         {
           id: "c1", title: "Reading: The Lost Kite", items: 5, level: 3, status: "todo",
+          passage: PASSAGE_A.body,
           questions: [
             { q: "Who is the main character?", opts: ["Sam", "The park keeper", "A dog"], correct: 0 },
             { q: "Where does the story happen?", opts: ["At the park", "At school", "On a boat"], correct: 0 },
@@ -817,6 +820,9 @@ const WORKOUTS: Workouts = {
         { id: "c2", title: "Listening: The Weather Report", items: 4, level: 3, status: "done", score: { correct: 3, total: 4 }, flagged: 1, questions: [] },
         {
           id: "c3", title: "Reading: Maya's Garden", items: 6, level: 2, status: "todo",
+          passage: `<p>Maya loved her little garden behind the house. One spring morning, she planted sunflower seeds in the soft brown soil.</p>
+<p>Every morning before school, Maya watered the garden so the plants would grow tall and strong. Her grandpa helped her pull out the weeds and showed her the sunniest spots.</p>
+<p>Then one day, the very first sunflower bloomed — bright and yellow. Maya felt so proud. All her hard work had paid off.</p>`,
           questions: [
             { q: "What did Maya plant first?", opts: ["Sunflower seeds", "A tree", "Carrots"], correct: 0 },
             { q: "Why did Maya water the garden every morning?", opts: ["So the plants would grow", "To make mud", "Because it was hot"], correct: 0 },
@@ -882,12 +888,10 @@ const PARENT: Parent = {
   nextMilestone: { label: "Level 4 upgrade", date: "Jun 20", daysAway: 10, lessonsLeft: 3 },
 };
 
-// ---- Pre-class connection check ----
+// ---- Pre-class connection check — just internet speed + mic permission ----
 const NETCHECK: NetCheckStep[] = [
-  { id: "net", label: "Internet connection", detail: "Checking speed…", ok: "Good · 48 Mbps", icon: "wifi" },
-  { id: "cam", label: "Camera", detail: "Looking for your camera…", ok: "Camera ready", icon: "video" },
-  { id: "mic", label: "Microphone", detail: "Testing your mic…", ok: "Mic ready", icon: "mic" },
-  { id: "screen", label: "Screen sharing", detail: "Checking permissions…", ok: "Ready to share", icon: "screen" },
+  { id: "net", label: "Internet speed", detail: "Checking your speed…", ok: "Good · 48 Mbps", icon: "wifi" },
+  { id: "mic", label: "Microphone access", detail: "Checking mic permission…", ok: "Permission granted", icon: "mic" },
 ];
 
 export const DATA: StudentData = {

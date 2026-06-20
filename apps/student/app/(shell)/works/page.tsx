@@ -53,8 +53,8 @@ export default function Works() {
     <div className="page view-enter">
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">My Portfolio</div>
-          <h1 className="page-h1">Maya&apos;s portfolio</h1>
+          <div className="h-eyebrow">My Work</div>
+          <h1 className="page-h1">Maya&apos;s best work</h1>
         </div>
         <span style={{ display: "none" }} />
       </div>

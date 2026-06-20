@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import SetupNotice from "@cueword/core/components/SetupNotice";
 import LiveClass from "@cueword/core/components/LiveClass";
@@ -21,6 +21,7 @@ import {
 } from "@cueword/core/lib/session";
 import { buildSteps, stepPhase } from "@cueword/core/lib/lesson";
 import type { AnswerPayload } from "@cueword/core/lib/types";
+import { notifyZoom } from "../lib/zoomNotify";
 
 export default function CoachLivePage() {
   const router = useRouter();
@@ -36,7 +37,18 @@ export default function CoachLivePage() {
     if (ready && (!user || user.role !== "coach")) router.replace("/login");
   }, [ready, user, router]);
 
-  // Reflect the student's picks live on the coach screen.
+  // Resolve the synced story_key → full story content from the DB. Runs before
+  // the early returns below (stable hook order), so it lives up here.
+  const render = session ? toRenderState(session) : null;
+  const storyKey = render?.storyKey ?? null;
+  const { story } = useStoryContent(storyKey);
+  // Ref so the subscription closure always sees the latest story without re-subscribing.
+  const storyRef = useRef(story);
+  useEffect(() => { storyRef.current = story; }, [story]);
+
+  const studentName = POC.student.displayName;
+
+  // Reflect the student's picks live on the coach screen + forward to Zoom Chat.
   useEffect(() => {
     if (!isSupabaseConfigured || !session?.id) return;
     return subscribeSessionEvents(session.id, (evt) => {
@@ -51,17 +63,30 @@ export default function CoachLivePage() {
           correct: Boolean(p.correct),
           choice: p.choice as AnswerPayload["choice"],
         });
+
+        // Send the Q&A result to the coach's Zoom Chat.
+        const result = p.correct ? "✅ Correct" : "❌ Wrong";
+        const s = storyRef.current;
+        if (s) {
+          const steps = buildSteps(s);
+          const step = steps[Number(p.stepIndex ?? -1)];
+          if (step?.kind === "q") {
+            notifyZoom(`${studentName} answered: "${step.q.q}" → ${result}`);
+          } else {
+            notifyZoom(`${studentName} answered — ${result}`);
+          }
+        } else {
+          notifyZoom(`${studentName} answered — ${result}`);
+        }
+      }
+
+      if (evt.type === "open_story") {
+        const p = evt.payload as { storyKey?: string };
+        const title = storyRef.current?.title ?? p.storyKey ?? "a story";
+        notifyZoom(`📖 ${studentName} opened: ${title}`);
       }
     });
-  }, [session?.id]);
-
-  // Resolve the synced story_key → full story content from the DB. Runs before
-  // the early returns below (stable hook order), so it lives up here.
-  const render = session ? toRenderState(session) : null;
-  const storyKey = render?.storyKey ?? null;
-  const { story } = useStoryContent(storyKey);
-
-  const studentName = POC.student.displayName;
+  }, [session?.id, studentName]);
 
   if (!isSupabaseConfigured) return <SetupNotice />;
   if (!ready || loading) return <div className="cw-today">Loading…</div>;

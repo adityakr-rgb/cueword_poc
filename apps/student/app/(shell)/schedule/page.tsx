@@ -46,7 +46,7 @@ export default function Schedule() {
       )}
       <div className="page-head">
         <div>
-          <div className="h-eyebrow">Schedule</div>
+          <div className="h-eyebrow">My Classes</div>
           <h1 className="page-h1">Your week of classes</h1>
         </div>
         <Sunny size={52} />
@@ -289,9 +289,6 @@ function NetCheck({ coach, onClose, onJoin }: { coach: string; onClose: () => vo
             "Checking…"
           )}
         </button>
-        <div className="nc-tip">
-          <Ic.screen size={14} stroke="var(--ink-3)" /> Remember to share your screen when you join.
-        </div>
       </div>
     </div>
   );

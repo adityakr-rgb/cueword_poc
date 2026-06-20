@@ -81,9 +81,6 @@ export default function Home() {
       {/* vocab warmup strip */}
       <VocabStrip />
 
-      {/* flagged items the coach will review in class */}
-      <FlaggedStrip />
-
       {/* skill levels */}
       <div className="section-title" style={{ marginTop: 30 }}>
         My Skill Levels
@@ -164,42 +161,6 @@ export default function Home() {
             <div className="resume-empty">That&apos;s everything — nice and tidy! 🎉</div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function FlaggedStrip() {
-  const F = DATA.FLAGGED;
-  if (!F || F.length === 0) return null;
-  return (
-    <div className="flag-strip pop-in">
-      <div className="flag-head">
-        <span className="flag-ico">
-          <Ic.flag size={18} />
-        </span>
-        <div className="flag-htext">
-          <b>To go over with your coach</b>
-          <span>Tricky bits from your workouts — saved for your next class.</span>
-        </div>
-        <span className="flag-count">{F.length}</span>
-      </div>
-      <div className="flag-list">
-        {F.map((f) => {
-          const sk = DATA.SKILLS.find((x) => x.id === f.skill);
-          return (
-            <div key={f.id} className="flag-item">
-              <span className="flag-dot" style={{ background: sk?.color }} />
-              <div className="flag-imid">
-                <div className="flag-ititle">{f.item}</div>
-                <div className="flag-isub">
-                  {f.title} · {sk?.name}
-                </div>
-              </div>
-              <span className="flag-from">{f.from}</span>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
@@ -343,9 +304,6 @@ function NetCheck({ coach, onClose, onJoin }: { coach: string; onClose: () => vo
             "Checking…"
           )}
         </button>
-        <div className="nc-tip">
-          <Ic.screen size={14} stroke="var(--ink-3)" /> Remember to share your screen when you join.
-        </div>
       </div>
     </div>
   );

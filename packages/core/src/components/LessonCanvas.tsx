@@ -27,6 +27,7 @@ export default function LessonCanvas({
   kidName,
   coachName,
   reveal,
+  focus = false,
 }: {
   story: Story;
   storyKey: StoryKey;
@@ -39,6 +40,8 @@ export default function LessonCanvas({
   kidName: string;
   coachName: string;
   reveal?: AnswerPayload["choice"] | null;
+  /** Focus layout: side-arrow nav + bottom phase stepper, no top stepper/bottom bar. */
+  focus?: boolean;
 }) {
   const [vocab, setVocab] = useState<{ word: string; def: string } | null>(null);
 
@@ -72,64 +75,106 @@ export default function LessonCanvas({
 
   const curIdx = EX_PHASES.indexOf(phaseName as Phase);
 
+  const phasesEl = (
+    <div className="class-phases">
+      {EX_PHASES.map((p, i) => {
+        const classes = ["ex-phase"];
+        if (atEdge || (curIdx > -1 && i < curIdx)) classes.push("ex-phase-done");
+        if (i === curIdx) classes.push("ex-phase-active");
+        return (
+          <span key={p} style={{ display: "contents" }}>
+            {i > 0 && <span className="ex-phase-sep" />}
+            <div className={classes.join(" ")}>
+              <span className="ex-phase-icon">{PHASE_ICON[p]}</span>
+              {p}
+              <span className="ex-phase-time">{PHASE_TIME[p]}</span>
+            </div>
+          </span>
+        );
+      })}
+    </div>
+  );
+
+  const stageEl = (
+    <div
+      key={safeIndex}
+      className={`ws-stage ge-band-${storyKey}`}
+      style={{ ["--ge-color" as string]: story.themeColor } as React.CSSProperties}
+    >
+      <StageCard
+        story={story}
+        step={step}
+        storyKey={storyKey}
+        kidName={kidName}
+        isDriver={isDriver}
+        onVocab={(word, def) => setVocab({ word, def })}
+        onAnswer={onAnswer}
+        reveal={reveal}
+      />
+    </div>
+  );
+
   return (
-    <main className="class-canvas">
+    <main className={`class-canvas${focus ? " cc-focus" : ""}`}>
       <div className="cc-canvas-label">{canvasLabel}</div>
 
-      <div className="class-phases">
-        {EX_PHASES.map((p, i) => {
-          const classes = ["ex-phase"];
-          if (atEdge || (curIdx > -1 && i < curIdx)) classes.push("ex-phase-done");
-          if (i === curIdx) classes.push("ex-phase-active");
-          return (
-            <span key={p} style={{ display: "contents" }}>
-              {i > 0 && <span className="ex-phase-sep" />}
-              <div className={classes.join(" ")}>
-                <span className="ex-phase-icon">{PHASE_ICON[p]}</span>
-                {p}
-                <span className="ex-phase-time">{PHASE_TIME[p]}</span>
-              </div>
-            </span>
-          );
-        })}
-      </div>
+      {!focus && phasesEl}
 
-      <div
-        key={safeIndex}
-        className={`ws-stage ge-band-${storyKey}`}
-        style={{ ["--ge-color" as string]: story.themeColor } as React.CSSProperties}
-      >
-        <StageCard
-          story={story}
-          step={step}
-          storyKey={storyKey}
-          kidName={kidName}
-          isDriver={isDriver}
-          onVocab={(word, def) => setVocab({ word, def })}
-          onAnswer={onAnswer}
-          reveal={reveal}
-        />
-      </div>
+      {focus ? (
+        <div className="cc-stage-wrap">
+          <button
+            className="cc-side-nav cc-side-back"
+            onClick={onPrev}
+            disabled={safeIndex === 0 || !isDriver}
+            aria-label="Back"
+          >
+            ←
+          </button>
+          {stageEl}
+          <button
+            className="cc-side-nav cc-side-next"
+            onClick={onNext}
+            disabled={atEnd || !isDriver}
+            aria-label={atEnd ? "Story done" : "Next"}
+          >
+            {atEnd ? "✓" : "→"}
+          </button>
+        </div>
+      ) : (
+        stageEl
+      )}
 
-      <div className="class-nav">
-        <button
-          className="ex-nav-btn ex-nav-back"
-          onClick={onPrev}
-          disabled={safeIndex === 0 || !isDriver}
-        >
-          ← Back
-        </button>
-        <span className="ex-counter">
-          Step {safeIndex + 1} / {total}
-          {phaseName ? ` · ${phaseName}` : ""}
-        </span>
-        <button className="ex-nav-btn ex-nav-next" onClick={onNext} disabled={atEnd || !isDriver}>
-          {atEnd ? "Story done ✓" : "Next →"}
-        </button>
-        <span className="class-nav-coach">
-          {isDriver ? "You're paced by whoever is sharing · ← / → keys" : "Following the screen…"}
-        </span>
-      </div>
+      {!focus && (
+        <div className="class-nav">
+          <button
+            className="ex-nav-btn ex-nav-back"
+            onClick={onPrev}
+            disabled={safeIndex === 0 || !isDriver}
+          >
+            ← Back
+          </button>
+          <span className="ex-counter">
+            Step {safeIndex + 1} / {total}
+            {phaseName ? ` · ${phaseName}` : ""}
+          </span>
+          <button className="ex-nav-btn ex-nav-next" onClick={onNext} disabled={atEnd || !isDriver}>
+            {atEnd ? "Story done ✓" : "Next →"}
+          </button>
+          <span className="class-nav-coach">
+            {isDriver ? "You're paced by whoever is sharing · ← / → keys" : "Following the screen…"}
+          </span>
+        </div>
+      )}
+
+      {focus && (
+        <div className="cc-bottom-bar">
+          {phasesEl}
+          <span className="cc-bottom-step">
+            Step {safeIndex + 1} / {total}
+            {phaseName ? ` · ${phaseName}` : ""}
+          </span>
+        </div>
+      )}
 
       <VocabPopup
         word={vocab?.word ?? null}
