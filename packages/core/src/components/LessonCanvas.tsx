@@ -28,6 +28,7 @@ export default function LessonCanvas({
   coachName,
   reveal,
   focus = false,
+  showTopPhases = true,
 }: {
   story: Story;
   storyKey: StoryKey;
@@ -42,6 +43,8 @@ export default function LessonCanvas({
   reveal?: AnswerPayload["choice"] | null;
   /** Focus layout: side-arrow nav + bottom phase stepper, no top stepper/bottom bar. */
   focus?: boolean;
+  /** Show the Listen/Read/Speak/Write stepper above the stage (non-focus layout). */
+  showTopPhases?: boolean;
 }) {
   const [vocab, setVocab] = useState<{ word: string; def: string } | null>(null);
 
@@ -118,7 +121,7 @@ export default function LessonCanvas({
     <main className={`class-canvas${focus ? " cc-focus" : ""}`}>
       <div className="cc-canvas-label">{canvasLabel}</div>
 
-      {!focus && phasesEl}
+      {!focus && showTopPhases && phasesEl}
 
       {focus ? (
         <div className="cc-stage-wrap">

@@ -95,6 +95,7 @@ export default function LiveClass({
             coachName={coachName}
             reveal={reveal}
             focus={focusLayout}
+            showTopPhases={!rightRail}
           />
           {showPlaybook && (
             <aside className="class-playbook">
