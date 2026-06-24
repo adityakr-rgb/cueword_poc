@@ -905,6 +905,17 @@ do $$ begin alter publication supabase_realtime add table public.session_events;
 do $$ begin alter publication supabase_realtime add table public.submissions;     exception when duplicate_object then null; end $$;
 do $$ begin alter publication supabase_realtime add table public.notifications;   exception when duplicate_object then null; end $$;
 
+-- Realtime evaluates RLS against the OLD row for UPDATE/DELETE; with the default
+-- replica identity that row is only the PK, so Realtime SILENTLY DROPS those
+-- events on RLS-protected tables (a subscriber sees nothing despite SUBSCRIBED).
+-- REPLICA IDENTITY FULL ships the whole old row so postgres_changes UPDATE/DELETE
+-- flow. Required for class_sessions (the live-class sync spine) + any table whose
+-- clients react to updates (e.g. notifications mark-as-read).
+alter table public.class_sessions replica identity full;
+alter table public.session_events replica identity full;
+alter table public.submissions    replica identity full;
+alter table public.notifications  replica identity full;
+
 -- ============================================================================
 -- 19. ROW-LEVEL SECURITY
 -- ============================================================================

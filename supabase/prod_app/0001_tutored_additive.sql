@@ -637,6 +637,11 @@ end $$;
 do $$ begin alter publication supabase_realtime add table public.class_sessions; exception when duplicate_object then null; end $$;
 do $$ begin alter publication supabase_realtime add table public.session_events;  exception when duplicate_object then null; end $$;
 
+-- Realtime drops UPDATE/DELETE postgres_changes on RLS tables unless the full old
+-- row is logged. Without this the coach never sees the student's setStep() writes.
+alter table public.class_sessions replica identity full;
+alter table public.session_events replica identity full;
+
 -- ============================================================================
 -- 13. ROW-LEVEL SECURITY  (NEW tables only — app tables keep their own policies)
 -- ============================================================================

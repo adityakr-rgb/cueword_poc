@@ -257,6 +257,11 @@ create index if not exists idx_curriculum_tl       on public.curriculum_stories(
 do $$ begin alter publication supabase_realtime add table public.submissions;   exception when duplicate_object then null; end $$;
 do $$ begin alter publication supabase_realtime add table public.notifications; exception when duplicate_object then null; end $$;
 
+-- Realtime drops UPDATE/DELETE postgres_changes on RLS tables unless the full old
+-- row is logged (e.g. notifications mark-as-read, submission status changes).
+alter table public.submissions   replica identity full;
+alter table public.notifications replica identity full;
+
 -- ---- 15. RLS — PERMISSIVE placeholder (replaced by auth-scoped 0003) --------
 do $$
 declare t text;

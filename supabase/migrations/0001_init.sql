@@ -137,3 +137,10 @@ begin
   alter publication supabase_realtime add table public.session_events;
 exception when duplicate_object then null;
 end $$;
+
+-- Realtime evaluates RLS against the OLD row for UPDATE/DELETE. With the default
+-- replica identity that row carries only the primary key, so Realtime silently
+-- DROPS the student's setStep() updates and the coach never syncs. REPLICA
+-- IDENTITY FULL ships the whole old row so RLS passes and postgres_changes flow.
+alter table public.class_sessions replica identity full;
+alter table public.session_events  replica identity full;
